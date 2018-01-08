@@ -26,7 +26,19 @@
   :license "zlib/libpng License <http://opensource.org/licenses/zlib-license.php>"
   :components
   ((:file "package")
-   (:file "enumerable" :depends-on ("package")))
+   (:file "enumerable")
+   (:file "do-enumerable")
+   (:module "drivers"
+    :components
+    ((:file "enumerable-generic")
+     (:file "enumerable-list")
+     (:file "enumerable-vector")
+     (:file "enumerable-sequence")
+     (:file "enumerable-hash-table")
+     (:file "enumerable-package")
+     (:file "enumerable-continuation"))))
   :depends-on
   (#:alexandria
-   #:cl-cont))
+   #:cl-cont
+   #:iterate
+   #:trivial-cltl2))

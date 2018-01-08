@@ -1,0 +1,128 @@
+;;;enumerable - enumerable implementation for CL, using cl-cont
+;;;Written in 2018 by Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>
+;;;
+;;;To the extent possible under law, the author(s) have dedicated all copyright
+;;;and related and neighboring rights to this software to the public domain
+;;;worldwide. This software is distributed without any warranty.
+;;;You should have received a copy of the CC0 Public Domain Dedication along
+;;;with this software. If not, see
+;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
+
+(in-package #:enumerable)
+
+(defclass sequence-enumerator ()
+  ((sequence
+    :type sequence
+    :initarg :sequence
+    :initform (error "must specify sequence"))
+   (index
+    :type (integer 0 *)
+    :initform 0)))
+
+(defmethod get-enumerator ((enumerable sequence))
+  (make-instance 'sequence-enumerator :sequence enumerable))
+
+(defmethod current ((enumerator sequence-enumerator))
+  (with-slots (sequence index)
+      enumerator
+    (if (and (> index 0)
+             (<= index (length sequence)))
+        (elt sequence (1- index))
+        nil)))
+
+(defmethod move-next ((enumerator sequence-enumerator))
+  (with-slots (sequence index)
+      enumerator
+    (if (< index (length sequence))
+        (and (incf index) t)
+        nil)))
+
+(defmethod any ((enumerable sequence))
+  (not (emptyp enumerable)))
+
+(defmethod any* ((enumerable sequence) predicate)
+  (and (find-if predicate enumerable) t))
+
+(defmethod contains ((enumerable sequence) item &optional (test #'eql))
+  (find item enumerable :test test))
+
+(defmethod ecount ((enumerable sequence))
+  (length enumerable))
+
+(defmethod ecount* ((enumerable sequence) predicate)
+  (count-if predicate enumerable))
+
+(defmethod default-if-empty ((enumerable sequence) &optional default)
+  (if (emptyp enumerable)
+      (list default)
+      enumerable))
+
+(defmethod efirst ((enumerable sequence) &optional default)
+  (cond
+    ((emptyp enumerable)
+     default)
+    (t
+     (elt enumerable 0))))
+
+(defmethod efirst* ((enumerable sequence) predicate &optional default)
+  (loop :for i :from 0 :below (length enumerable)
+        :for elt := (elt enumerable i)
+        :if (funcall predicate elt)
+          :return elt
+        :finally (return default)))
+
+(defmethod elast ((enumerable sequence) &optional default)
+  (cond
+    ((emptyp enumerable)
+     default)
+    (t
+     (elt enumerable (1- (length enumerable))))))
+
+(defmethod elast* ((enumerable sequence) predicate &optional default)
+  (loop :for i :from (1- (length enumerable)) :downto 0
+        :for elt := (elt enumerable i)
+        :if (funcall predicate elt)
+          :return elt
+        :finally (return default)))
+
+(defmethod skip ((enumerable sequence) count)
+  (enumerable
+    (let ((i count)
+          (len (length enumerable)))
+      (loop
+        :while (< i len)
+        :do
+           (yield (elt enumerable i))
+           (incf i)))))
+
+(defmethod skip-while ((enumerable sequence) predicate)
+  (enumerable
+    (let ((i 0)
+          (len (length enumerable)))
+      (loop
+        :while (and (< i len) (funcall predicate (elt enumerable i)))
+        :do (incf i))
+      (loop
+        :while (< i len)
+        :do
+           (yield (elt enumerable i))
+           (incf i)))))
+
+(defmethod take ((enumerable sequence) count)
+  (enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :while (< i count)
+      :for elt := (elt enumerable i)
+      :do (yield elt))))
+
+(defmethod take-while ((enumerable sequence) predicate)
+  (enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :for elt := (elt enumerable i)
+      :while  (funcall predicate elt)
+      :do (yield elt))))
+
+(defmethod to-list ((enumerable sequence))
+  (copy-sequence 'list enumerable))
