@@ -31,7 +31,7 @@ various generator style algorithms on which they act.
   (print x)) ; prints 3
 
 ;;Strings
-(do-enumerable (x (take "Hello, world!" 5)
+(do-enumerable (x (take "Hello, world!" 5))
   (print x)) ; prints #\H #\e #\l #\l #\o
 
 ;;Hash tables iterate over a cons who's car is the key, and cdr is the value
