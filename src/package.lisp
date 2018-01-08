@@ -15,6 +15,8 @@
    #:enumerable
    #:lambdae
    #:defenumerable
+   #:yield
+   #:yield-break
 
    #:map-enumerable
    #:get-enumerator
