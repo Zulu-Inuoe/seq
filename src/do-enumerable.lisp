@@ -14,12 +14,22 @@
   (defvar *%do-enumerable-expanders* ())
 
   (defun %default-expander (type var enumerable result body env)
-    (declare (ignore type env))
-    `(block nil
-       (map-enumerable (lambda (,var) ,@body) ,enumerable)
-       (let ((,var nil))
-         (declare (ignorable ,var))
-         ,result)))
+    (with-gensyms (enum-sym)
+      `(let ((,enum-sym ,enumerable))
+         (typecase ,enum-sym
+           ,@(mapcar
+              (lambda (expander)
+                (destructuring-bind (expander-type . expansion-fn)
+                    expander
+                  `(,expander-type
+                    ,(funcall expansion-fn type var enum-sym result body env))))
+              *%do-enumerable-expanders*)
+           (t
+            (block nil
+              (map-enumerable (lambda (,var) ,@body) ,enum-sym)
+              (let ((,var nil))
+                (declare (ignorable ,var))
+                ,result)))))))
 
   (defun %subtype< (t1 t2)
     "Returns t if t1 is definitely a subtype of t2,
