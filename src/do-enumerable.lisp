@@ -21,6 +21,12 @@
          (declare (ignorable ,var))
          ,result)))
 
+  (defun %subtype< (t1 t2)
+    "Returns t if t1 is definitely a subtype of t2,
+and t2 is not a subtype of t1."
+    (and (subtypep t1 t2)
+         (not (subtypep t2 t1))))
+
   (defun %get-expander (decl-type)
     (cond
       ((null decl-type) #'%default-expander)
@@ -41,7 +47,8 @@
          (setf (cdr cell) expander)))
       (t
        (setf *%do-enumerable-expanders*
-             (delete type *%do-enumerable-expanders* :test #'equal :key #'car)))))
+             (delete type *%do-enumerable-expanders* :test #'equal :key #'car))))
+    (setf *%do-enumerable-expanders* (stable-sort *%do-enumerable-expanders* #'%subtype< :key #'car)))
 
   (defmacro define-do-enumerable-expander
       (type (iter-type iter-var iter-enum iter-res iter-body iter-env)
