@@ -37,11 +37,21 @@
         (and (incf index) t)
         nil)))
 
+(defmethod all ((enumerable sequence) predicate)
+  (every predicate enumerable))
+
 (defmethod any ((enumerable sequence))
   (not (emptyp enumerable)))
 
 (defmethod any* ((enumerable sequence) predicate)
   (and (find-if predicate enumerable) t))
+
+(defmethod eappend ((enumerable sequence) element)
+  (enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :do (yield (elt enumerable i))
+      :finally (yield element))))
 
 (defmethod contains ((enumerable sequence) item &optional (test #'eql))
   (find item enumerable :test test))
@@ -57,6 +67,13 @@
       (list default)
       enumerable))
 
+(defmethod element-at ((enumerable sequence) index &optional default)
+  (cond
+    ((< index (length enumerable))
+     (elt enumerable index))
+    (t
+     default)))
+
 (defmethod efirst ((enumerable sequence) &optional default)
   (cond
     ((emptyp enumerable)
@@ -65,11 +82,12 @@
      (elt enumerable 0))))
 
 (defmethod efirst* ((enumerable sequence) predicate &optional default)
-  (loop :for i :from 0 :below (length enumerable)
-        :for elt := (elt enumerable i)
-        :if (funcall predicate elt)
-          :return elt
-        :finally (return default)))
+  (loop
+    :for i :from 0 :below (length enumerable)
+    :for elt := (elt enumerable i)
+    :if (funcall predicate elt)
+      :return elt
+    :finally (return default)))
 
 (defmethod elast ((enumerable sequence) &optional default)
   (cond
@@ -79,11 +97,19 @@
      (elt enumerable (1- (length enumerable))))))
 
 (defmethod elast* ((enumerable sequence) predicate &optional default)
-  (loop :for i :from (1- (length enumerable)) :downto 0
-        :for elt := (elt enumerable i)
-        :if (funcall predicate elt)
-          :return elt
-        :finally (return default)))
+  (loop
+    :for i :from (1- (length enumerable)) :downto 0
+    :for elt := (elt enumerable i)
+    :if (funcall predicate elt)
+      :return elt
+    :finally (return default)))
+
+(defmethod prepend ((enumerable sequence) element)
+  (enumerable
+    (loop
+      :initially (yield element)
+      :for i :from 0 :below (length enumerable)
+      :do (yield (elt enumerable i)))))
 
 (defmethod skip ((enumerable sequence) count)
   (enumerable
@@ -126,3 +152,6 @@
 
 (defmethod to-list ((enumerable sequence))
   (copy-sequence 'list enumerable))
+
+(defmethod to-vector ((enumerable sequence))
+  (copy-sequence 'vector enumerable))

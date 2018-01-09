@@ -17,8 +17,11 @@
         :do (funcall fn x))
   (values))
 
+(defmethod all (enumerable predicate)
+  (not (any* enumerable (complement predicate))))
+
 (defmethod any (enumerable)
-  (do-enumerable (x enumerable)
+  (do-enumerable (x enumerable nil)
     (declare (ignore x))
     (return t)))
 
@@ -26,6 +29,22 @@
   (do-enumerable (x enumerable)
     (when (funcall predicate x)
       (return t))))
+
+(defmethod eappend (enumerable element)
+  (enumerable
+    (loop :with enumerator := (get-enumerator enumerable)
+          :while (move-next enumerator)
+          :do (yield (current enumerator)))
+    (yield element)))
+
+(defmethod concat (first second)
+  (enumerable
+    (loop :with enumerator := (get-enumerator first)
+          :while (move-next enumerator)
+          :do (yield (current enumerator)))
+    (loop :with enumerator := (get-enumerator second)
+          :while (move-next enumerator)
+          :do (yield (current enumerator)))))
 
 (defmethod contains (enumerable item &optional (test #'eql))
   (any* enumerable (lambda (x) (funcall test x item))))
@@ -49,29 +68,49 @@
       enumerable
       (list default)))
 
+(defmethod distinct (enumerable &optional (test #'eql))
+  (enumerable
+    (let ((known-elements ()))
+      (loop :with enumerator := (get-enumerator enumerable)
+            :while (move-next enumerator)
+            :for x := (current enumerator)
+            :unless (find x known-elements :test test)
+              :do (progn
+                    (yield x)
+                    (push x known-elements))))))
+
+(defmethod element-at (enumerable index &optional default)
+  (efirst (skip enumerable index) default))
+
+(defmethod except (first second &optional (test #'eql))
+  (where first (lambda (elt) (not (contains second elt test)))))
+
 (defmethod efirst (enumerable &optional default)
-  (do-enumerable (x enumerable)
-    (return-from efirst x))
-  default)
+  (do-enumerable (x enumerable default)
+    (return-from efirst x)))
 
 (defmethod efirst* (enumerable predicate &optional default)
-  (do-enumerable (x enumerable)
+  (do-enumerable (x enumerable default)
     (when (funcall predicate x)
-      (return-from efirst* x)))
-  default)
+      (return-from efirst* x))))
 
 (defmethod elast (enumerable &optional default)
   (let ((last-res default))
-    (do-enumerable (x enumerable)
-      (setf last-res x))
-    last-res))
+    (do-enumerable (x enumerable last-res)
+      (setf last-res x))))
 
 (defmethod elast* (enumerable predicate &optional default)
   (let ((last-res default))
-    (do-enumerable (x enumerable)
+    (do-enumerable (x enumerable last-res)
       (when (funcall predicate x)
-        (setf last-res x)))
-    last-res))
+        (setf last-res x)))))
+
+(defmethod prepend (enumerable element)
+  (enumerable
+    (yield element)
+    (loop :with enumerator := (get-enumerator enumerable)
+          :while (move-next enumerator)
+          :do (yield (current enumerator)))))
 
 (defmethod select (enumerable selector)
   (enumerable
@@ -87,6 +126,26 @@
           :for x := (current enumerator)
           :for i :from 0 :by 1
           :do (yield (funcall selector x i)))))
+
+(defmethod select-many (enumerable selector &optional (result-selector #'identity))
+  (enumerable
+    (loop :with enumerator := (get-enumerator (select enumerable selector))
+          :while (move-next enumerator)
+          :for elt := (current enumerator)
+          :do
+             (loop :with elt-enumerator := (get-enumerator elt)
+                   :while (move-next elt-enumerator)
+                   :do (yield (funcall result-selector (current elt-enumerator)))))))
+
+(defmethod select-many* (enumerable selector &optional (result-selector #'identity))
+  (enumerable
+    (loop :with enumerator := (get-enumerator (select* enumerable selector))
+          :while (move-next enumerator)
+          :for elt := (current enumerator)
+          :do
+             (loop :with elt-enumerator := (get-enumerator elt)
+                   :while (move-next elt-enumerator)
+                   :do (yield (funcall result-selector (current elt-enumerator)))))))
 
 (defmethod skip (enumerable count)
   (enumerable

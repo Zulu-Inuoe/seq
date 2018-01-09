@@ -26,18 +26,30 @@
    #:move-next
 
    ;;;enumerable expressions
+   #:all
    #:any
    #:any*
+   #:eappend
    #:contains
+   #:concat
    #:ecount
    #:ecount*
    #:default-if-empty
+   #:distinct
+   #:element-at
+   #:empty
+   #:except
    #:efirst
    #:efirst*
    #:elast
    #:elast*
+   #:prepend
+   #:range
+   #:repeat
    #:select
    #:select*
+   #:select-many
+   #:select-many*
    #:skip
    #:skip-while
    #:take

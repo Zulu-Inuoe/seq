@@ -27,6 +27,10 @@
    "Moves `enumerator' to the next element.
 Returns `t' if `enumerator' is valid after it's moved, `nil' otherwise."))
 
+(defgeneric all (enumerable predicate)
+  (:documentation
+   "Returns `t' if all elements in `enumerable' satisfy `predicate'."))
+
 (defgeneric any (enumerable)
   (:documentation
    "Returns `t' if there are any elements in `enumerable'. `nil' otherwise."))
@@ -35,10 +39,18 @@ Returns `t' if `enumerator' is valid after it's moved, `nil' otherwise."))
   (:documentation
    "Returns `t' if any element in `enumerable' satisfies `predicate'. `nil' otherwise."))
 
+(defgeneric eappend (enumerable element)
+  (:documentation
+   "Appends `element' to the end of the `enumerable'."))
+
 (defgeneric contains (enumerable item &optional test)
   (:documentation
    "Returns `t' if `enumerable' contains `item', by applying `test'.
 `test' defaults to `eql'."))
+
+(defgeneric concat (first second)
+  (:documentation
+   "Concatenates the `enumerable's `first' and `second'."))
 
 (defgeneric ecount (enumerable)
   (:documentation
@@ -51,6 +63,24 @@ Returns `t' if `enumerator' is valid after it's moved, `nil' otherwise."))
 (defgeneric default-if-empty (enumerable &optional default)
   (:documentation
    "Returns the elements of `enumerable', or an enumerable with `default' if it is empty."))
+
+(defgeneric distinct (enumerable &optional test)
+  (:documentation
+   "Returns distinct elements from `enumerable' by using `test'.
+`test' defaults to `eql'."))
+
+(defgeneric element-at (enumerable index &optional default)
+  (:documentation
+   "Returns the element in `enumerable' at the specified `index', or `default' if such an element does not exist."))
+
+(defun empty ()
+  "Returns an empty `enumerable'."
+  nil)
+
+(defgeneric except (first second &optional test)
+  (:documentation
+   "Produces the set difference between `first' and `second' by using `test'.
+`test' defaults to `eql'"))
 
 (defgeneric efirst (enumerable &optional default)
   (:documentation
@@ -68,6 +98,23 @@ Returns `t' if `enumerator' is valid after it's moved, `nil' otherwise."))
   (:documentation
    "Returns the last element in `enumerable' that satusfies `predicate', or `default' if no such element exists."))
 
+(defgeneric prepend (enumerable element)
+  (:documentation
+   "Adds `element' to the beginning of `enumerable'."))
+
+(defun range (start count)
+  "Generates `count' integers starting at `count'."
+  (enumerable
+    (loop :for i :from start :by 1
+          :repeat count
+          :do (yield i))))
+
+(defun repeat (value count)
+  "Generates an enumerable that repeats `value' `count' times."
+  (enumerable
+    (loop :repeat count
+          :do (yield value))))
+
 (defgeneric select (enumerable selector)
   (:documentation
    "Maps each element of `enumerable' to a new `enumerable' using `selector'.
@@ -77,6 +124,20 @@ Returns `t' if `enumerator' is valid after it's moved, `nil' otherwise."))
   (:documentation
    "Maps each element of `enumerable' to a new `enumerable' using `selector'.
 `selector' is a function of two arguments: the element and its index."))
+
+(defgeneric select-many (enumerable selector &optional result-selector)
+  (:documentation
+   "Maps each element of `enumerable' using `selector'. `selector' should produce an `enumerable' for each element.
+These sub-sequences are flattened, and each element of the resulting sequence is mapped by `result-selector'.
+`selector' is a function of one argument: the element.
+`result-selector' defaults to `identity'."))
+
+(defgeneric select-many* (enumerable selector &optional result-selector)
+  (:documentation
+   "Maps each element of `enumerable' using `selector'. `selector' should produce an `enumerable' for each element.
+These sub-sequences are flattened, and each element of the resulting sequence is mapped by `result-selector'.
+`selector' is a function of two arguments: the element and its index.
+`result-selector' defaults to `identity'."))
 
 (defgeneric skip (enumerable count)
   (:documentation

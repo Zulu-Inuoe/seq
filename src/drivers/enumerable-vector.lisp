@@ -22,6 +22,20 @@
         :do (funcall fn x))
   (values))
 
+(defmethod eappend ((enumerable list) element)
+  (enumerable
+    (loop
+      :for x :across enumerable
+      :do (yield x)
+      :finally (yield element))))
+
+(defmethod prepend ((enumerable list) element)
+  (enumerable
+    (loop
+      :initially (yield element)
+      :for x :across enumerable
+      :do (yield x))))
+
 (defmethod select ((enumerable vector) selector)
   (enumerable
     (loop
@@ -34,6 +48,25 @@
       :for x :across enumerable
       :for i :from 0 :by 1
       :do (yield (funcall selector x i)))))
+
+(defmethod select-many ((enumerable vector) selector &optional (result-selector #'identity))
+  (enumerable
+    (loop
+      :for elt :across enumerable
+      :do
+         (loop :with elt-enumerator := (get-enumerator (funcall selector elt))
+               :while (move-next elt-enumerator)
+               :do (yield (funcall result-selector (current elt-enumerator)))))))
+
+(defmethod select-many* ((enumerable vector) selector &optional (result-selector #'identity))
+  (enumerable
+    (loop
+      :for elt :across enumerable
+      :for i :from 0 :by 1
+      :do
+         (loop :with elt-enumerator := (get-enumerator (funcall selector elt i))
+               :while (move-next elt-enumerator)
+               :do (yield (funcall result-selector (current elt-enumerator)))))))
 
 (defmethod take ((enumerable vector) count)
   (enumerable
