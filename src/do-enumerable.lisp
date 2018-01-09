@@ -40,14 +40,14 @@ and t2 is not a subtype of t1."
   (defun %set-expander (type expander)
     (cond
       (expander
-       (let ((cell (assoc type *%do-enumerable-expanders*)))
+       (let ((cell (assoc type *%do-enumerable-expanders* :test #'type=)))
          (unless cell
            (setf cell (cons type nil))
            (push cell *%do-enumerable-expanders*))
          (setf (cdr cell) expander)))
       (t
        (setf *%do-enumerable-expanders*
-             (delete type *%do-enumerable-expanders* :test #'equal :key #'car))))
+             (delete type *%do-enumerable-expanders* :test #'type= :key #'car))))
     (setf *%do-enumerable-expanders* (stable-sort *%do-enumerable-expanders* #'%subtype< :key #'car)))
 
   (defmacro define-do-enumerable-expander
@@ -61,32 +61,64 @@ and t2 is not a subtype of t1."
           ,@body))
        ',type)))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun %derived-fun-type (function)
+    #+sbcl
+    (sb-impl::%fun-type function))
+
+  (defun %expression-type (exp env)
+    (setf exp (macroexpand exp env))
+    (cond
+      ((constantp exp)
+       ;;Constant expression, just get its type
+       (type-of exp))
+      ((symbolp exp)
+       (multiple-value-bind (bind-type local decl-info)
+           (cltl2:variable-information exp env)
+         (declare (ignore bind-type local))
+         ;;Try and find its declared type
+         (cdr (assoc 'type decl-info))))
+      ((listp exp)
+       (destructuring-bind (fn &rest args) exp
+         (declare (ignore args))
+         (cond
+           ((symbolp fn)
+            ;;fn
+            (multiple-value-bind (bind-type local decl-info)
+                (cltl2:function-information fn env)
+              (case bind-type
+                (nil)
+                (:function
+                 (when-let ((ftype (cond
+                                     (local
+                                      ;;If it's local, try and get decl info
+                                      (cdr (assoc 'ftype decl-info)))
+                                     (t
+                                      ;;Otherwise, try and get the decl info or the derived
+                                      (or (cdr (assoc 'ftype decl-info))
+                                          (%derived-fun-type (symbol-function fn)))))))
+                   ;;ftype definition is
+                   (destructuring-bind (function params return-values)
+                       ftype
+                     (declare (ignore function params))
+                     (cond
+                       ((listp return-values)
+                        ;;(values ...)
+                        (cadr return-values))
+                       (t
+                        return-values)))))
+                (:macro)
+                (:special-form
+                 ;;We could code walk..
+                 ))))
+           (t
+            ;;(lambda ...)
+            ;;We can't derive anything
+            ))))
+      (t nil))))
+
 (defmacro do-enumerable ((var enumerable &optional result)
                          &body body
                          &environment env)
-  (let* ((enumerable (macroexpand enumerable env))
-         (decl-type
-           (cond
-             ((constantp enumerable) (type-of enumerable))
-             ((symbolp enumerable)
-              (multiple-value-bind (bind-type local decl-info)
-                  (cltl2:variable-information enumerable env)
-                (declare (ignore bind-type local))
-                (cdr (assoc 'type decl-info))))
-             ((listp enumerable)
-              (multiple-value-bind (bind-type local decl-info)
-                  (cltl2:function-information (car enumerable) env)
-                (declare (ignore bind-type local))
-                (when-let ((ftype (cdr (assoc 'ftype decl-info))))
-                  (destructuring-bind (function params return-values)
-                      ftype
-                    (declare (ignore function params))
-                    (cond
-                      ((and (listp return-values)
-                            (eq (car return-values) 'values))
-                       (cadr return-values))
-                      (t
-                       return-values))))))
-             (t nil))))
-    (funcall (%get-expander decl-type)
-             decl-type var enumerable result body env)))
+  (let ((exp-type (%expression-type enumerable env)))
+    (funcall (%get-expander exp-type) exp-type var enumerable result body env)))
