@@ -9,7 +9,7 @@
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
 (defpackage #:enumerable
-  (:use #:alexandria #:cl #:iterate)
+  (:use #:alexandria #:cl)
   (:export
    ;;;enumerable
    #:enumerable

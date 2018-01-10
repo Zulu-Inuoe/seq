@@ -40,5 +40,4 @@
   :depends-on
   (#:alexandria
    #:cl-cont
-   #:iterate
    #:trivial-cltl2))
