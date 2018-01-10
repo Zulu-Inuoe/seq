@@ -115,6 +115,8 @@ and t2 is not a subtype of t1."
                        ((listp return-values)
                         ;;(values ...)
                         (cadr return-values))
+                       ((eq return-values '*)
+                        nil)
                        (t
                         return-values)))))
                 (:macro)
