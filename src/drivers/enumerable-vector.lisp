@@ -10,80 +10,93 @@
 
 (in-package #:enumerable)
 
-(define-do-enumerable-expander vector
-    (type var enumerable result body env)
-  `(loop :for ,var :across ,enumerable
-         :do (progn ,@body)
-         :finally
-            (return ,result)))
-
 (defmethod map-enumerable (fn (enumerable vector))
   (loop :for x :across enumerable
         :do (funcall fn x))
   (values))
 
-(defmethod eappend ((enumerable list) element)
-  (enumerable
+(defmethod eappend ((enumerable vector) element)
+  (with-enumerable
     (loop
       :for x :across enumerable
       :do (yield x)
       :finally (yield element))))
 
-(defmethod prepend ((enumerable list) element)
-  (enumerable
+(defmethod element-at ((enumerable vector) index &optional default)
+  (cond
+    ((< index (length enumerable))
+     (aref enumerable index))
+    (t
+     default)))
+
+(defmethod elast ((enumerable vector) &optional default)
+  (let ((len (length enumerable)))
+    (cond
+      ((zerop len) default)
+      (t
+       (aref enumerable (1- len))))))
+
+(defmethod elast* ((enumerable vector) predicate &optional default)
+  (loop
+    :for i :from (1- (length enumerable)) :downto 0
+    :for elt := (aref enumerable i)
+    :if (funcall predicate elt)
+      :return elt
+    :finally (return default)))
+
+(defmethod prepend ((enumerable vector) element)
+  (with-enumerable
     (loop
       :initially (yield element)
       :for x :across enumerable
       :do (yield x))))
 
 (defmethod select ((enumerable vector) selector)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :across enumerable
       :do (yield (funcall selector x)))))
 
 (defmethod select* ((enumerable vector) selector)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :across enumerable
       :for i :from 0 :by 1
       :do (yield (funcall selector x i)))))
 
 (defmethod select-many ((enumerable vector) selector &optional (result-selector #'identity))
-  (enumerable
+  (with-enumerable
     (loop
       :for elt :across enumerable
       :do
-         (loop :with elt-enumerator := (get-enumerator (funcall selector elt))
-               :while (move-next elt-enumerator)
-               :do (yield (funcall result-selector (current elt-enumerator)))))))
+         (do-enumerable (sub-elt (funcall selector elt))
+           (yield (funcall result-selector sub-elt))))))
 
 (defmethod select-many* ((enumerable vector) selector &optional (result-selector #'identity))
-  (enumerable
+  (with-enumerable
     (loop
       :for elt :across enumerable
       :for i :from 0 :by 1
       :do
-         (loop :with elt-enumerator := (get-enumerator (funcall selector elt i))
-               :while (move-next elt-enumerator)
-               :do (yield (funcall result-selector (current elt-enumerator)))))))
+         (do-enumerable (sub-elt (funcall selector elt i))
+           (yield (funcall result-selector sub-elt))))))
 
 (defmethod take ((enumerable vector) count)
-  (enumerable
+  (with-enumerable
     (loop
       :repeat count
       :for x :across enumerable
       :do (yield x))))
 
 (defmethod take-while ((enumerable vector) predicate)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :across enumerable
       :while (funcall predicate x)
       :do (yield x))))
 
 (defmethod where ((enumerable vector) predicate)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :across enumerable
       :if (funcall predicate x)

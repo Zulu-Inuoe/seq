@@ -11,67 +11,6 @@
 (in-package #:enumerable)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *%do-enumerable-expanders* ())
-
-  (defun %default-expander (type var enumerable result body env)
-    (with-gensyms (enum-sym)
-      `(let ((,enum-sym ,enumerable))
-         (typecase ,enum-sym
-           ,@(mapcar
-              (lambda (expander)
-                (destructuring-bind (expander-type . expansion-fn)
-                    expander
-                  `(,expander-type
-                    ,(funcall expansion-fn type var enum-sym result body env))))
-              *%do-enumerable-expanders*)
-           (t
-            (block nil
-              (map-enumerable (lambda (,var) ,@body) ,enum-sym)
-              (let ((,var nil))
-                (declare (ignorable ,var))
-                ,result)))))))
-
-  (defun %subtype< (t1 t2)
-    "Returns t if t1 is definitely a subtype of t2,
-and t2 is not a subtype of t1."
-    (and (subtypep t1 t2)
-         (not (subtypep t2 t1))))
-
-  (defun %get-expander (decl-type)
-    (cond
-      ((null decl-type) #'%default-expander)
-      (t
-       (loop :for (type . expander) :in *%do-enumerable-expanders*
-             :if (subtypep decl-type type)
-               :return expander
-             :finally
-                (return #'%default-expander)))))
-
-  (defun %set-expander (type expander)
-    (cond
-      (expander
-       (let ((cell (assoc type *%do-enumerable-expanders* :test #'type=)))
-         (unless cell
-           (setf cell (cons type nil))
-           (push cell *%do-enumerable-expanders*))
-         (setf (cdr cell) expander)))
-      (t
-       (setf *%do-enumerable-expanders*
-             (delete type *%do-enumerable-expanders* :test #'type= :key #'car))))
-    (setf *%do-enumerable-expanders* (stable-sort *%do-enumerable-expanders* #'%subtype< :key #'car)))
-
-  (defmacro define-do-enumerable-expander
-      (type (iter-type iter-var iter-enum iter-res iter-body iter-env)
-       &body body)
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (%set-expander
-        ',type
-        (lambda (,iter-type ,iter-var ,iter-enum ,iter-res ,iter-body ,iter-env)
-          (declare (ignorable ,iter-type ,iter-var ,iter-enum ,iter-res ,iter-body ,iter-env))
-          ,@body))
-       ',type)))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
   (defun %derived-fun-type (function)
     #+sbcl
     (sb-impl::%fun-type function))
@@ -127,10 +66,14 @@ and t2 is not a subtype of t1."
             ;;(lambda ...)
             ;;We can't derive anything
             ))))
-      (t nil))))
+      (t nil)))
+
+  (defun %do-enumerable-expand (default-expander var enumerable result body env)
+    (let* ((exp-type (%expression-type enumerable env))
+           (expander (or (%get-expander exp-type) default-expander)))
+      (funcall expander exp-type var enumerable result body env))))
 
 (defmacro do-enumerable ((var enumerable &optional result)
                          &body body
                          &environment env)
-  (let ((exp-type (%expression-type enumerable env)))
-    (funcall (%get-expander exp-type) exp-type var enumerable result body env)))
+  (%do-enumerable-expand #'%typecase-map-expander var enumerable result body env))

@@ -11,8 +11,8 @@
 (defpackage #:enumerable
   (:use #:alexandria #:cl)
   (:export
-   ;;;enumerable
-   #:enumerable
+   ;;;with-enumerable
+   #:with-enumerable
    #:lambdae
    #:defenumerable
    #:yield

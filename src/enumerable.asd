@@ -27,7 +27,11 @@
   :components
   ((:file "package")
    (:file "enumerable")
+   (:file "do-enumerable-expander")
+   (:file "builtin-expanders")
    (:file "do-enumerable")
+   (:file "with-enumerable")
+   (:file "expressions")
    (:module "drivers"
     :components
     ((:file "enumerable-generic")

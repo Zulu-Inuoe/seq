@@ -11,6 +11,8 @@
 (in-package #:enumerable)
 
 (defmethod map-enumerable (fn enumerable)
+  ;;NOTE: default expander for do-enumerable uses map-enumerable,
+  ;;so don't use it here, otherwise bad time recursion
   (loop :with enumerator := (get-enumerator enumerable)
         :while (move-next enumerator)
         :for x := (current enumerator)
@@ -31,20 +33,17 @@
       (return t))))
 
 (defmethod eappend (enumerable element)
-  (enumerable
-    (loop :with enumerator := (get-enumerator enumerable)
-          :while (move-next enumerator)
-          :do (yield (current enumerator)))
+  (with-enumerable
+    (do-enumerable (x enumerable)
+      (yield x))
     (yield element)))
 
 (defmethod concat (first second)
-  (enumerable
-    (loop :with enumerator := (get-enumerator first)
-          :while (move-next enumerator)
-          :do (yield (current enumerator)))
-    (loop :with enumerator := (get-enumerator second)
-          :while (move-next enumerator)
-          :do (yield (current enumerator)))))
+  (with-enumerable
+    (do-enumerable (x first)
+      (yield x))
+    (do-enumerable (x second)
+      (yield x))))
 
 (defmethod contains (enumerable item &optional (test #'eql))
   (any* enumerable (lambda (x) (funcall test x item))))
@@ -69,15 +68,12 @@
       (list default)))
 
 (defmethod distinct (enumerable &optional (test #'eql))
-  (enumerable
+  (with-enumerable
     (let ((known-elements ()))
-      (loop :with enumerator := (get-enumerator enumerable)
-            :while (move-next enumerator)
-            :for x := (current enumerator)
-            :unless (find x known-elements :test test)
-              :do (progn
-                    (yield x)
-                    (push x known-elements))))))
+      (do-enumerable (x enumerable)
+        (unless (find x known-elements :test test)
+          (yield x)
+          (push x known-elements))))))
 
 (defmethod element-at (enumerable index &optional default)
   (efirst (skip enumerable index) default))
@@ -106,49 +102,39 @@
         (setf last-res x)))))
 
 (defmethod prepend (enumerable element)
-  (enumerable
+  (with-enumerable
     (yield element)
-    (loop :with enumerator := (get-enumerator enumerable)
-          :while (move-next enumerator)
-          :do (yield (current enumerator)))))
+    (do-enumerable (x enumerable)
+      (yield x))))
 
 (defmethod select (enumerable selector)
-  (enumerable
-    (loop :with enumerator := (get-enumerator enumerable)
-          :while (move-next enumerator)
-          :for x := (current enumerator)
-          :do (yield (funcall selector x)))))
+  (with-enumerable
+    (do-enumerable (x enumerable)
+      (yield (funcall selector x)))))
 
 (defmethod select* (enumerable selector)
-  (enumerable
-    (loop :with enumerator := (get-enumerator enumerable)
-          :while (move-next enumerator)
-          :for x := (current enumerator)
-          :for i :from 0 :by 1
-          :do (yield (funcall selector x i)))))
+  (with-enumerable
+    (let ((i 0))
+      (do-enumerable (x enumerable)
+        (yield (funcall selector x i))
+        (incf i)))))
 
 (defmethod select-many (enumerable selector &optional (result-selector #'identity))
-  (enumerable
-    (loop :with enumerator := (get-enumerator (select enumerable selector))
-          :while (move-next enumerator)
-          :for elt := (current enumerator)
-          :do
-             (loop :with elt-enumerator := (get-enumerator elt)
-                   :while (move-next elt-enumerator)
-                   :do (yield (funcall result-selector (current elt-enumerator)))))))
+  (with-enumerable
+    (do-enumerable (elt enumerable)
+      (do-enumerable (sub-elt (funcall selector elt))
+        (yield (funcall result-selector sub-elt))))))
 
 (defmethod select-many* (enumerable selector &optional (result-selector #'identity))
-  (enumerable
-    (loop :with enumerator := (get-enumerator (select* enumerable selector))
-          :while (move-next enumerator)
-          :for elt := (current enumerator)
-          :do
-             (loop :with elt-enumerator := (get-enumerator elt)
-                   :while (move-next elt-enumerator)
-                   :do (yield (funcall result-selector (current elt-enumerator)))))))
+  (with-enumerable
+    (let ((i 0))
+      (do-enumerable (elt enumerable)
+        (do-enumerable (sub-elt (funcall selector elt i))
+          (yield (funcall result-selector sub-elt)))
+        (incf i)))))
 
 (defmethod skip (enumerable count)
-  (enumerable
+  (with-enumerable
     (let ((enumerator (get-enumerator enumerable)))
       (unless (zerop count)
         (loop :repeat count
@@ -161,7 +147,7 @@
             :do (yield (current enumerator))))))
 
 (defmethod skip-while (enumerable predicate)
-  (enumerable
+  (with-enumerable
     (let ((enumerator (get-enumerator enumerable)))
       (loop :while (move-next enumerator)
             :for x := (current enumerator)
@@ -172,33 +158,27 @@
             :do (yield x)))))
 
 (defmethod take (enumerable count)
-  (enumerable
-    (loop
-      :repeat count
-      :with enumerator := (get-enumerator enumerable)
-      :while (move-next enumerator)
-      :for x := (current enumerator)
-      :do (yield x))))
+  (with-enumerable
+    (when (<= count 0)
+      (yield-break))
+
+    (do-enumerable (x enumerable)
+      (yield x)
+      (when (zerop (decf count))
+        (yield-break)))))
 
 (defmethod take-while (enumerable predicate)
-  (enumerable
-    (loop
-      :with enumerator := (get-enumerator enumerable)
-      :while (move-next enumerator)
-      :for x := (current enumerator)
-      :if (funcall predicate x)
-        :do (yield x)
-      :else
-        :do (yield-break))))
+  (with-enumerable
+    (do-enumerable (x enumerable)
+      (if (funcall predicate x)
+          (yield x)
+          (yield-break)))))
 
 (defmethod where (enumerable predicate)
-  (enumerable
-    (loop
-      :with enumerator := (get-enumerator enumerable)
-      :while (move-next enumerator)
-      :for x := (current enumerator)
-      :if (funcall predicate x)
-        :do (yield x))))
+  (with-enumerable
+    (do-enumerable (x enumerable)
+      (when (funcall predicate x)
+        (yield x)))))
 
 (defmethod to-list (enumerable)
   (let ((res ()))

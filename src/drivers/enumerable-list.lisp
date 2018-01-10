@@ -10,11 +10,6 @@
 
 (in-package #:enumerable)
 
-(define-do-enumerable-expander list
-    (type var enumerable result body env)
-  `(dolist (,var ,enumerable ,result)
-     ,@body))
-
 (defmethod map-enumerable (fn (enumerable list))
   (mapc fn enumerable)
   (values))
@@ -34,73 +29,51 @@
       nil))
 
 (defmethod eappend ((enumerable list) element)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :in enumerable
       :do (yield x)
       :finally (yield element))))
 
-(defmethod element-at ((enumerable list) index &optional default)
-  (if-let ((cell (nthcdr index enumerable)))
-    (car cell)
-    default))
-
-(defmethod efirst* ((enumerable list) predicate &optional default)
-  (dolist (x enumerable default)
-    (when (funcall predicate x)
-      (return x))))
-
-(defmethod elast ((enumerable list) &optional default)
-  (cond
-    (enumerable
-      (last enumerable))
-    (t
-     default)))
-
-(defmethod elast* ((enumerable list) predicate &optional default)
-  (let ((res default))
-    (dolist (x enumerable res)
-      (when (funcall predicate x)
-        (setf res x)))))
-
 (defmethod prepend ((enumerable list) element)
   (cons element enumerable))
 
 (defmethod select ((enumerable list) selector)
-  (enumerable
+  (with-enumerable
     (dolist (x enumerable)
       (yield (funcall selector x)))))
 
 (defmethod select* ((enumerable list) selector)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :in enumerable
       :for i :from 0 :by 1
       :do (yield (funcall selector x i)))))
 
 (defmethod select-many ((enumerable list) selector &optional (result-selector #'identity))
-  (enumerable
-    (dolist (elt enumerable)
-      (loop :with elt-enumerator := (get-enumerator (funcall selector elt))
-            :while (move-next elt-enumerator)
-            :do (yield (funcall result-selector (current elt-enumerator)))))))
+  (with-enumerable
+    (loop
+      :for elt :in enumerable
+      :do
+      (do-enumerable (sub-elt (funcall selector elt))
+        (yield (funcall result-selector sub-elt))))))
 
 (defmethod select-many* ((enumerable list) selector &optional (result-selector #'identity))
-  (enumerable
+  (with-enumerable
     (loop
       :for elt :in enumerable
       :for i :from 0 :by 1
-      :do (loop :with elt-enumerator := (get-enumerator (funcall selector elt i))
-                :while (move-next elt-enumerator)
-                :do (yield (funcall result-selector (current elt-enumerator)))))))
+      :do
+         (do-enumerable (sub-elt (funcall selector elt i))
+           (yield (funcall result-selector sub-elt))))))
 
 (defmethod skip ((enumerable list) count)
-  (enumerable
+  (with-enumerable
     (dolist (x (nthcdr count enumerable))
       (yield x))))
 
 (defmethod skip-while ((enumerable list) predicate)
-  (enumerable
+  (with-enumerable
     (let ((cell enumerable))
       (loop
         :while (and cell (funcall predicate (car cell)))
@@ -109,21 +82,21 @@
         (yield x)))))
 
 (defmethod take ((enumerable list) count)
-  (enumerable
+  (with-enumerable
     (loop
       :repeat count
       :for x :in enumerable
       :do (yield x))))
 
 (defmethod take-while ((enumerable list) predicate)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :in enumerable
       :while (funcall predicate x)
       :do (yield x))))
 
 (defmethod where ((enumerable list) predicate)
-  (enumerable
+  (with-enumerable
     (loop
       :for x :in enumerable
       :if (funcall predicate x)

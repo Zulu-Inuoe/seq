@@ -10,20 +10,6 @@
 
 (in-package #:enumerable)
 
-(define-do-enumerable-expander hash-table
-    (type var enumerable result body env)
-  (with-gensyms (k v)
-    `(let ((,var (cons nil nil)))
-       (declare (dynamic-extent ,var))
-       (loop
-         :for ,k :being :the :hash-keys :in ,enumerable :using (hash-value ,v)
-         :do
-            (setf (car ,var) ,k
-                  (cdr ,var) ,v)
-            (progn ,@body)
-         :finally
-            (return ,result)))))
-
 (defmethod map-enumerable (fn (enumerable hash-table))
   (let ((cell (cons nil nil)))
     (declare (dynamic-extent cell))

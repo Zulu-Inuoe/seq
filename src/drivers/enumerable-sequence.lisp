@@ -47,7 +47,7 @@
   (and (find-if predicate enumerable) t))
 
 (defmethod eappend ((enumerable sequence) element)
-  (enumerable
+  (with-enumerable
     (loop
       :for i :from 0 :below (length enumerable)
       :do (yield (elt enumerable i))
@@ -67,52 +67,15 @@
       (list default)
       enumerable))
 
-(defmethod element-at ((enumerable sequence) index &optional default)
-  (cond
-    ((< index (length enumerable))
-     (elt enumerable index))
-    (t
-     default)))
-
-(defmethod efirst ((enumerable sequence) &optional default)
-  (cond
-    ((emptyp enumerable)
-     default)
-    (t
-     (elt enumerable 0))))
-
-(defmethod efirst* ((enumerable sequence) predicate &optional default)
-  (loop
-    :for i :from 0 :below (length enumerable)
-    :for elt := (elt enumerable i)
-    :if (funcall predicate elt)
-      :return elt
-    :finally (return default)))
-
-(defmethod elast ((enumerable sequence) &optional default)
-  (cond
-    ((emptyp enumerable)
-     default)
-    (t
-     (elt enumerable (1- (length enumerable))))))
-
-(defmethod elast* ((enumerable sequence) predicate &optional default)
-  (loop
-    :for i :from (1- (length enumerable)) :downto 0
-    :for elt := (elt enumerable i)
-    :if (funcall predicate elt)
-      :return elt
-    :finally (return default)))
-
 (defmethod prepend ((enumerable sequence) element)
-  (enumerable
+  (with-enumerable
     (loop
       :initially (yield element)
       :for i :from 0 :below (length enumerable)
       :do (yield (elt enumerable i)))))
 
 (defmethod skip ((enumerable sequence) count)
-  (enumerable
+  (with-enumerable
     (let ((i count)
           (len (length enumerable)))
       (loop
@@ -122,7 +85,7 @@
            (incf i)))))
 
 (defmethod skip-while ((enumerable sequence) predicate)
-  (enumerable
+  (with-enumerable
     (let ((i 0)
           (len (length enumerable)))
       (loop
@@ -135,7 +98,7 @@
            (incf i)))))
 
 (defmethod take ((enumerable sequence) count)
-  (enumerable
+  (with-enumerable
     (loop
       :for i :from 0 :below (length enumerable)
       :while (< i count)
@@ -143,7 +106,7 @@
       :do (yield elt))))
 
 (defmethod take-while ((enumerable sequence) predicate)
-  (enumerable
+  (with-enumerable
     (loop
       :for i :from 0 :below (length enumerable)
       :for elt := (elt enumerable i)
