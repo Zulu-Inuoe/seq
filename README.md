@@ -16,6 +16,13 @@ various generator style algorithms on which they act.
     :for i :from 1 :by 1
     :do (yield i)))
 
+;;Alternatively
+(defun natural-numbers ()
+  (with-enumerable
+    (loop
+      :for i :from 1 :by 1
+      :do (yield i))))
+
 ;;Print the first 50 even numbers
 (do-enumerable (n (take (where (natural-numbers) #'evenp) 50))
   (print n))
@@ -41,15 +48,8 @@ various generator style algorithms on which they act.
 ;;Packages iterate over the accessible symbols (eg do-symbols)
 (do-enumerable (sym (find-package :cl))
   (print sym)) ; prints.. a lot
+
 ```
-
-## Notes
-
-Do not use `do-enumerable` inside an enumerable form.
-`do-enumerable` is meant to be a low-overhead, general loop mechanism.
-For optimization reasons, it will fall back to `map-enumerable` when it is unable to
-expand into a loop.
-In this context, due to an use of cl-cont, the yield will not work properly.
 
 ## Defining new enumerable types
 
@@ -70,20 +70,29 @@ This object must implement
 
 The best simple example is the general [sequence enumerator](src/drivers/enumerable-sequence.lisp).
 
-For simple of optimization in `do-enumerable`, define a `map-enumerable` method.
+For simple optimization in `do-enumerable`, define a `map-enumerable` method.
 
 For lower level optimization, see the `define-do-enumerable-expander` macro.
 This defines a specialized loop body for a given type.
 
-As an example:
+See the [builtin expanders](src/builtin-expanders.lisp) for examples.
+
+This allows the following:
 
 ``` common-lisp
-(define-do-enumerable-expander vector
-    (type var enumerable result body env)
-  `(loop :for ,var :across ,enumerable
-         :do (progn ,@body)
-         :finally
-            (return ,result)))
+(defun print-squares (numbers)
+  (declare (type list numbers))
+  (do-enumerable (x numbers)
+    (print (* x x))))
 ```
 
-This is the expander for the vector type.
+to expand into
+
+``` common-lisp
+(defun print-squares (numbers)
+  (declare (type list numbers))
+  (dolist (x numbers)
+    (print (* x x))))
+```
+
+Meaning no overhead from using the more general `do-enumerable` for iteration.
