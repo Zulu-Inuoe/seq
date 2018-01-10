@@ -88,3 +88,10 @@
       :for x :across enumerable
       :if (funcall predicate x)
         :do (yield x))))
+
+(defmethod to-vector ((enumerable sequence) &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
+  (make-array (length enumerable)
+              :element-type element-type
+              :initial-contents enumerable
+              :adjustable adjustable
+              :fill-pointer (and fill-pointer-p t)))

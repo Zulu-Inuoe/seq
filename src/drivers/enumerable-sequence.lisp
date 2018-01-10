@@ -153,5 +153,3 @@
 (defmethod to-list ((enumerable sequence))
   (copy-sequence 'list enumerable))
 
-(defmethod to-vector ((enumerable sequence))
-  (copy-sequence 'vector enumerable))

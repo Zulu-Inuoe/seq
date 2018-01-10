@@ -206,10 +206,14 @@
       (push x res))
     (nreverse res)))
 
-(defmethod to-vector (enumerable)
+(defmethod to-vector (enumerable &key (element-type t) adjustable fill-pointer-p)
   (let ((res ())
         (len 0))
     (do-enumerable (x enumerable)
       (push x res)
       (incf len))
-    (make-array len :initial-contents (nreverse res))))
+    (make-array len
+                :element-type element-type
+                :initial-contents (nreverse res)
+                :adjustable adjustable
+                :fill-pointer (and fill-pointer-p t))))
