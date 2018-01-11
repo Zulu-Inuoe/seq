@@ -26,14 +26,14 @@
   (:documentation
    "Appends `element' to the end of the `enumerable'."))
 
+(defgeneric concat (first second)
+  (:documentation
+   "Concatenates the `enumerable's `first' and `second'."))
+
 (defgeneric contains (enumerable item &optional test)
   (:documentation
    "Returns `t' if `enumerable' contains `item', by applying `test'.
 `test' defaults to `eql'."))
-
-(defgeneric concat (first second)
-  (:documentation
-   "Concatenates the `enumerable's `first' and `second'."))
 
 (defgeneric ecount (enumerable)
   (:documentation
