@@ -30,13 +30,15 @@
    #:any
    #:any*
    #:eappend
-   #:contains
    #:concat
+   #:consume
+   #:contains
    #:ecount
    #:ecount*
    #:default-if-empty
    #:distinct
    #:element-at
+   #:evaluate
    #:empty
    #:except
    #:efirst
@@ -51,8 +53,13 @@
    #:select-many
    #:select-many*
    #:skip
+   #:skip-last
+   #:skip-until
    #:skip-while
    #:take
+   #:take-every
+   #:take-last
+   #:take-until
    #:take-while
    #:where
    #:to-list

@@ -45,6 +45,11 @@
     (do-enumerable (x second)
       (yield x))))
 
+(defmethod consume (enumerable)
+  (do-enumerable (elt enumerable)
+    (declare (ignore elt)))
+  (values))
+
 (defmethod contains (enumerable item &optional (test #'eql))
   (any* enumerable (lambda (x) (funcall test x item))))
 
@@ -77,6 +82,11 @@
 
 (defmethod element-at (enumerable index &optional default)
   (efirst (skip enumerable index) default))
+
+(defmethod evalute (functions)
+  (with-enumerable
+    (do-enumerable (fn functions)
+      (yield (funcall fn)))))
 
 (defmethod except (first second &optional (test #'eql))
   (where first (lambda (elt) (not (contains second elt test)))))
@@ -146,6 +156,27 @@
       (loop :while (move-next enumerator)
             :do (yield (current enumerator))))))
 
+(defmethod skip-last (enumerable count)
+  (cond
+    ((zerop count)
+     enumerable)
+    (t
+     (let ((res ()))
+       (do-enumerable (elt enumerable)
+         (push elt res))
+       (nreverse (nthcdr count res))))))
+
+(defmethod skip-until (enumerable predicate)
+  (with-enumerable
+    (let ((enumerator (get-enumerator enumerable)))
+      (loop :while (move-next enumerator)
+            :for x := (current enumerator)
+            :until (funcall predicate x)
+            :finally (yield x))
+      (loop :while (move-next enumerator)
+            :for x := (current enumerator)
+            :do (yield x)))))
+
 (defmethod skip-while (enumerable predicate)
   (with-enumerable
     (let ((enumerator (get-enumerator enumerable)))
@@ -166,6 +197,47 @@
       (yield x)
       (when (zerop (decf count))
         (yield-break)))))
+
+(defmethod take-every (enumerable step)
+  (with-enumerable
+    (let ((i 0)
+          (next-index 0))
+      (do-enumerable (elt enumerable)
+        (when (= i next-index)
+          (yield elt)
+          (incf next-index step))
+        (incf i)))))
+
+(defmethod take-last (enumerable count)
+  (cond
+    ((zerop count)
+     nil)
+    (t
+     (let ((res (make-array count :fill-pointer t))
+           (index 0)
+           (filled nil))
+       (do-enumerable (elt enumerable)
+         (setf (aref res index) elt)
+         (when (= (incf index) count)
+           (setf index 0)
+           (setf filled t)))
+
+       (if filled
+           ;;Organize the array by shifting things to the left by `index'
+           (loop :repeat index
+                 :do
+                    (loop :for i :from 0 :below (1- count)
+                          :do (rotatef (aref res i)
+                                       (aref res (1+ i)))))
+           (setf (fill-pointer res) index))
+       res))))
+
+(defmethod take-until (enumerable predicate)
+  (with-enumerable
+    (do-enumerable (elt enumerable)
+      (if (funcall predicate elt)
+          (yield-break)
+          (yield elt)))))
 
 (defmethod take-while (enumerable predicate)
   (with-enumerable

@@ -22,12 +22,21 @@
       :do (yield x)
       :finally (yield element))))
 
+(defmethod consume ((enumerable vector))
+  (values))
+
 (defmethod element-at ((enumerable vector) index &optional default)
   (cond
     ((< index (length enumerable))
      (aref enumerable index))
     (t
      default)))
+
+(defmethod evaluate ((functions vector))
+  (with-enumerable
+    (loop
+      :for fn :across functions
+      :do (yield (funcall fn)))))
 
 (defmethod elast ((enumerable vector) &optional default)
   (let ((len (length enumerable)))
@@ -81,11 +90,86 @@
          (do-enumerable (sub-elt (funcall selector elt i))
            (yield (funcall result-selector sub-elt))))))
 
+(defmethod skip ((enumerable vector) count)
+  (cond
+    ((zerop count)
+     enumerable)
+    (t
+     (with-enumerable
+       (let ((i count)
+             (len (length enumerable)))
+         (loop
+           :while (< i len)
+           :do
+              (yield (aref enumerable i))
+              (incf i)))))))
+
+(defmethod skip-last ((enumerable vector) count)
+  (let ((len (length enumerable)))
+    (cond
+      ((>= count len)
+       nil)
+      (t
+       (with-enumerable
+         (loop :for i :from 0 :below (- len count)
+               :do (yield (aref enumerable i))))))))
+
+(defmethod skip-until ((enumerable vector) predicate)
+  (with-enumerable
+    (let ((i 0)
+          (len (length enumerable)))
+      (loop
+        :while (and (< i len) (not (funcall predicate (aref enumerable i))))
+        :do (incf i))
+      (loop
+        :while (< i len)
+        :do
+           (yield (aref enumerable i))
+           (incf i)))))
+
+(defmethod skip-while ((enumerable vector) predicate)
+  (with-enumerable
+    (let ((i 0)
+          (len (length enumerable)))
+      (loop
+        :while (and (< i len) (funcall predicate (aref enumerable i)))
+        :do (incf i))
+      (loop
+        :while (< i len)
+        :do
+           (yield (aref enumerable i))
+           (incf i)))))
+
 (defmethod take ((enumerable vector) count)
   (with-enumerable
     (loop
       :repeat count
       :for x :across enumerable
+      :do (yield x))))
+
+(defmethod take-every ((enumerable vector) step)
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable) :by step
+      :do (yield (aref enumerable i)))))
+
+(defmethod take-last ((enumerable vector) count)
+  (let ((len (length enumerable)))
+    (cond
+      ((>= count len)
+       enumerable)
+      ((zerop count)
+       nil)
+      (t
+       (with-enumerable
+         (loop :for i :from (- len count) :below len
+               :do (yield (aref enumerable i))))))))
+
+(defmethod take-until ((enumerable vector) predicate)
+  (with-enumerable
+    (loop
+      :for x :across enumerable
+      :until (funcall predicate x)
       :do (yield x))))
 
 (defmethod take-while ((enumerable vector) predicate)

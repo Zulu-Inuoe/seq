@@ -52,6 +52,8 @@
       :for i :from 0 :below (length enumerable)
       :do (yield (elt enumerable i))
       :finally (yield element))))
+(defmethod consume ((enumerable sequence))
+  (values))
 
 (defmethod contains ((enumerable sequence) item &optional (test #'eql))
   (find item enumerable :test test))

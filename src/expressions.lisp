@@ -30,6 +30,10 @@
   (:documentation
    "Concatenates the `enumerable's `first' and `second'."))
 
+(defgeneric consume (enumerable)
+  (:documentation
+   "Completely consumes the given sequence."))
+
 (defgeneric contains (enumerable item &optional test)
   (:documentation
    "Returns `t' if `enumerable' contains `item', by applying `test'.
@@ -59,6 +63,10 @@
 (defun empty ()
   "Returns an empty `enumerable'."
   nil)
+
+(defgeneric evaluate (functions)
+  (:documentation
+   "Returns a sequence containing the values resulting from invoking each function in `functions'."))
 
 (defgeneric except (first second &optional test)
   (:documentation
@@ -126,6 +134,14 @@ These sub-sequences are flattened, and each element of the resulting sequence is
   (:documentation
    "Skips the first `count' elements of `enumerable'."))
 
+(defgeneric skip-last (enumerable count)
+  (:documentation
+   "Skips the last `count' elements of `enumerable'."))
+
+(defgeneric skip-until (enumerable predicate)
+  (:documentation
+   "Skips elements in `enumerable' to the first matching `predicate'"))
+
 (defgeneric skip-while (enumerable predicate)
   (:documentation
    "Skips elements in `enumerable' while they match `predicate'."))
@@ -133,6 +149,18 @@ These sub-sequences are flattened, and each element of the resulting sequence is
 (defgeneric take (enumerable count)
   (:documentation
    "Takes the first `count' elements in `enumerable'."))
+
+(defgeneric take-every (enumerable step)
+  (:documentation
+   "Returns every nth element of a sequence."))
+
+(defgeneric take-last (enumerable count)
+  (:documentation
+   "Takes the last `count' elements in `enumerable'."))
+
+(defgeneric take-until (enumerable predicate)
+  (:documentation
+   "Takes elements from `enumerable' until they match `predicate'."))
 
 (defgeneric take-while (enumerable predicate)
   (:documentation
