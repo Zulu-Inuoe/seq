@@ -116,3 +116,9 @@
 (defmethod to-list ((enumerable sequence))
   (copy-sequence 'list enumerable))
 
+(defmethod to-vector ((enumerable sequence) &key (element-type t) adjustable fill-pointer-p)
+  (make-array (length enumerable)
+              :element-type element-type
+              :initial-contents enumerable
+              :adjustable adjustable
+              :fill-pointer (and fill-pointer-p t)))
