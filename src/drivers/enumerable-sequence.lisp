@@ -10,6 +10,11 @@
 
 (in-package #:enumerable)
 
+(defmethod map-enumerable (fn (enumerable sequence))
+  (loop :for i :from 0 :below (length enumerable)
+        :do (funcall fn (elt enumerable i)))
+  (values))
+
 (defclass sequence-enumerator ()
   ((sequence
     :type sequence
@@ -52,6 +57,7 @@
       :for i :from 0 :below (length enumerable)
       :do (yield (elt enumerable i))
       :finally (yield element))))
+
 (defmethod consume ((enumerable sequence))
   (values))
 
@@ -69,6 +75,27 @@
       (list default)
       enumerable))
 
+(defmethod evaluate ((functions sequence))
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length functions)
+      :do (yield (funcall (elt functions i))))))
+
+(defmethod elast ((enumerable sequence) &optional default)
+  (let ((len (length enumerable)))
+    (cond
+      ((zerop len) default)
+      (t
+       (elt enumerable (1- len))))))
+
+(defmethod elast* ((enumerable sequence) predicate &optional default)
+  (loop
+    :for i :from (1- (length enumerable)) :downto 0
+    :for elt := (elt enumerable i)
+    :if (funcall predicate elt)
+      :return elt
+    :finally (return default)))
+
 (defmethod prepend ((enumerable sequence) element)
   (with-enumerable
     (loop
@@ -76,10 +103,61 @@
       :for i :from 0 :below (length enumerable)
       :do (yield (elt enumerable i)))))
 
+(defmethod select ((enumerable sequence) selector)
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :do (yield (funcall selector (elt enumerable i))))))
+
+(defmethod select* ((enumerable sequence) selector)
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :do (yield (funcall selector (elt enumerable i) i)))))
+
+(defmethod select-many ((enumerable sequence) selector &optional (result-selector #'identity))
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :do
+         (do-enumerable (sub-elt (funcall selector (elt enumerable i)))
+           (yield (funcall result-selector sub-elt))))))
+
+(defmethod select-many* ((enumerable sequence) selector &optional (result-selector #'identity))
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :do
+         (do-enumerable (sub-elt (funcall selector (elt enumerable i) i))
+           (yield (funcall result-selector sub-elt))))))
+
 (defmethod skip ((enumerable sequence) count)
   (with-enumerable
     (let ((i count)
           (len (length enumerable)))
+      (loop
+        :while (< i len)
+        :do
+           (yield (elt enumerable i))
+           (incf i)))))
+
+(defmethod skip-last ((enumerable sequence) count)
+  (let ((len (length enumerable)))
+    (cond
+      ((>= count len)
+       nil)
+      (t
+       (with-enumerable
+         (loop :for i :from 0 :below (- len count)
+               :do (yield (elt enumerable i))))))))
+
+(defmethod skip-until ((enumerable sequence) predicate)
+  (with-enumerable
+    (let ((i 0)
+          (len (length enumerable)))
+      (loop
+        :while (and (< i len) (not (funcall predicate (elt enumerable i))))
+        :do (incf i))
       (loop
         :while (< i len)
         :do
@@ -105,6 +183,32 @@
       :for i :from 0 :below (length enumerable)
       :while (< i count)
       :for elt := (elt enumerable i)
+      :do (yield elt))))
+
+(defmethod take-every ((enumerable sequence) step)
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable) :by step
+      :do (yield (elt enumerable i)))))
+
+(defmethod take-last ((enumerable sequence) count)
+  (let ((len (length enumerable)))
+    (cond
+      ((>= count len)
+       enumerable)
+      ((zerop count)
+       nil)
+      (t
+       (with-enumerable
+         (loop :for i :from (- len count) :below len
+               :do (yield (elt enumerable i))))))))
+
+(defmethod take-until ((enumerable sequence) predicate)
+  (with-enumerable
+    (loop
+      :for i :from 0 :below (length enumerable)
+      :for elt := (elt enumerable i)
+      :until (funcall predicate elt)
       :do (yield elt))))
 
 (defmethod take-while ((enumerable sequence) predicate)
