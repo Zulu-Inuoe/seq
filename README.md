@@ -48,7 +48,6 @@ various generator style algorithms on which they act.
 ;;Packages iterate over the accessible symbols (eg do-symbols)
 (do-enumerable (sym (find-package :cl))
   (print sym)) ; prints.. a lot
-
 ```
 
 ## Defining new enumerable types
@@ -70,14 +69,27 @@ This object must implement
 
 The best simple example is the general [sequence enumerator](src/drivers/enumerable-sequence.lisp).
 
-For simple optimization in `do-enumerable`, define a `map-enumerable` method.
+### Optimization
 
-For lower level optimization, see the `define-do-enumerable-expander` macro.
-This defines a specialized loop body for a given type.
+#### map-enumerable
+
+The simplest way to optimize your type is to define a custom `map-enumerable` method.
+This method is generally used by `do-enumerable`, and will therefore be used in many of
+the built-in [implementations of expressions](src/drivers/enumerable-generic.lisp).
+
+#### expressions
+
+Each [expression](src/expressions.lisp) may be specialized on, when appropriate.
+
+#### do-enumerable
+
+Finally, using the `define-do-enumerable-expander` macro allows you to define an inline
+loop expansion for your type. `do-enumerable` will use this expansion when it is able to identify
+the type, and as part of an inline type dispatcher.
 
 See the [builtin expanders](src/builtin-expanders.lisp) for examples.
 
-This allows the following:
+With this system,
 
 ``` common-lisp
 (defun print-squares (numbers)
@@ -86,7 +98,7 @@ This allows the following:
     (print (* x x))))
 ```
 
-to expand into
+will expand into
 
 ``` common-lisp
 (defun print-squares (numbers)

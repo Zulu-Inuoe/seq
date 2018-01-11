@@ -11,6 +11,22 @@
 (in-package #:enumerable)
 
 (defmacro with-enumerable (&body body)
+  "Run `body' in an enumerable context, where `yield' will yield a new value in
+the enumeration, and `yield-break' will end the enumeration.
+Example:
+(to-list
+  (with-enumerable
+    (yield 1)
+    (yield 2)
+    (when (zerop (random 2))
+      (yield-break))
+    (yield 3)))
+=>
+(1 2)
+OR
+(1 2 3)
+
+depending on the output of RANDOM."
   (with-gensyms (cont)
     `(make-instance
       'continuation-enumerable
@@ -40,9 +56,11 @@
                     (yield-break))))))))))
 
 (defmacro lambdae (args &body body)
+  "Lambda who's body is enumerable."
   `(lambda ,args
      (with-enumerable ,@body)))
 
 (defmacro defenumerable (name args &body body)
+  "Like defun, for a function who's body is enumerable."
   `(defun ,name ,args
      (with-enumerable ,@body)))
