@@ -38,10 +38,28 @@
 (defmethod consume ((enumerable list))
   (values))
 
+(defmethod element-at ((enumerable list) index &optional default)
+  (if-let ((cell (nthcdr index enumerable)))
+    (car cell)
+    default))
+
 (defmethod evaluate ((functions list))
   (with-enumerable
     (dolist (fn functions)
       (yield (funcall fn)))))
+
+(defmethod elast ((enumerable list) &optional default)
+  (cond
+    (enumerable
+     (last enumerable))
+    (t
+     default)))
+
+(defmethod elast* ((enumerable list) predicate &optional default)
+  (let ((last-res default))
+    (dolist (x enumerable last-res)
+      (when (funcall predicate x)
+        (setf last-res x)))))
 
 (defmethod prepend ((enumerable list) element)
   (cons element enumerable))
@@ -84,6 +102,9 @@
        (dolist (x (nthcdr count enumerable))
          (yield x))))))
 
+(defmethod skip-last ((enumerable list) count)
+  (butlast enumerable count))
+
 (defmethod skip-until ((enumerable list) predicate)
   (with-enumerable
     (let ((cell enumerable))
@@ -122,6 +143,30 @@
           (yield elt)
           (incf next-index step))
         (incf i)))))
+
+(defmethod take-last ((enumerable list) count)
+  (cond
+    ((zerop count)
+     nil)
+    (t
+     (let ((res (make-array count :fill-pointer t))
+           (index 0)
+           (filled nil))
+       (dolist (elt enumerable)
+         (setf (aref res index) elt)
+         (when (= (incf index) count)
+           (setf index 0)
+           (setf filled t)))
+
+       (if filled
+           ;;Organize the array by shifting things to the left by `index'
+           (loop :repeat index
+                 :do
+                    (loop :for i :from 0 :below (1- count)
+                          :do (rotatef (aref res i)
+                                       (aref res (1+ i)))))
+           (setf (fill-pointer res) index))
+       res))))
 
 (defmethod take-until ((enumerable list) predicate)
   (with-enumerable
