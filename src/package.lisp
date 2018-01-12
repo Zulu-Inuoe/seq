@@ -52,6 +52,8 @@
    #:select*
    #:select-many
    #:select-many*
+   #:single
+   #:single*
    #:skip
    #:skip-last
    #:skip-until

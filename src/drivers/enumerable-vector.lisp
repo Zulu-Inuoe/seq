@@ -104,6 +104,28 @@
          (do-enumerable (sub-elt (funcall selector elt i))
            (yield (funcall result-selector sub-elt))))))
 
+(defmethod single ((enumerable vector) &optional default)
+  (let ((len (length enumerable)))
+    (cond
+      ((> len 1)
+       (error "more than one element present in the enumerable"))
+      ((= len 1)
+       (aref enumerable 0))
+      (t
+       default))))
+
+(defmethod single* ((enumerable vector) predicate &optional default)
+  (loop
+    :with found-value := nil
+    :with ret := default
+    :for elt :across enumerable
+    :if (funcall predicate elt)
+      :do (if found-value
+              (error "more than one element present in the enumerable matches predicate")
+              (setf found-value t
+                    ret elt))
+    :finally (return ret)))
+
 (defmethod skip ((enumerable vector) count)
   (cond
     ((zerop count)

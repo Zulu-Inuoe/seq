@@ -130,6 +130,16 @@ These sub-sequences are flattened, and each element of the resulting sequence is
 `selector' is a function of two arguments: the element and its index.
 `result-selector' defaults to `identity'."))
 
+(defgeneric single (enumerable &optional default)
+  (:documentation
+   "Returns the only element of `enumerable', or `default' if `enumerable' is empty.
+If `enumerable' has more than one element, an error is signalled instead."))
+
+(defgeneric single* (enumerable predicate &optional default)
+  (:documentation
+   "Returns the only element of `enumerable' that satisfies `predicate', or `default' if no such element exists.
+If more than one element matches `predicate', an error is signalled instead."))
+
 (defgeneric skip (enumerable count)
   (:documentation
    "Skips the first `count' elements of `enumerable'."))

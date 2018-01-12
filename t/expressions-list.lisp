@@ -153,6 +153,28 @@
   (5am:is (equal (to-list (select-many* '(0 1 2 2) #'repeat #'1+)) '(2 3 3 3 3 3)))
   (5am:is (equal (to-list (select-many* '() #'repeat)) '())))
 
+(5am:test single
+  (5am:is (equal (single '(0)) 0))
+  (5am:is (equal (single '(0) :sentinel) 0))
+  (5am:is (equal (single '()) nil))
+  (5am:is (equal (single '() :sentinel) :sentinel))
+  (5am:signals error
+    (single '(0 1)))
+  (5am:signals error
+    (single '(0 1) :sentinel)))
+
+(5am:test single*
+  (5am:is (equal (single* '(0) #'evenp) 0))
+  (5am:is (equal (single* '(0) #'evenp :sentinel) 0))
+  (5am:is (equal (single* '(-5 -1 0 5 1) #'evenp) 0))
+  (5am:is (equal (single* '(-5 -1 0 5 1) #'evenp :sentinel) 0))
+  (5am:is (equal (single* '() #'evenp) nil))
+  (5am:is (equal (single* '() #'evenp :sentinel) :sentinel))
+  (5am:signals error
+    (single* '(0 1 2) #'evenp))
+  (5am:signals error
+    (single* '(0 1 2) #'evenp :sentinel)))
+
 (5am:test skip
   (5am:is (equal (to-list (skip '(0 1 2 3) 0)) '(0 1 2 3)))
   (5am:is (equal (to-list (skip '(0 1 2 3) 2)) '(2 3)))

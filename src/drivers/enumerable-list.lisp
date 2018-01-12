@@ -99,6 +99,25 @@
          (do-enumerable (sub-elt (funcall selector elt i))
            (yield (funcall result-selector sub-elt))))))
 
+(defmethod single ((enumerable list) &optional default)
+  (cond
+    ((cdr enumerable)
+     (error "more than one element present in the enumerable"))
+    (enumerable
+     (car enumerable))
+    (t
+     default)))
+
+(defmethod single* ((enumerable list) predicate &optional default)
+  (let ((found-value nil)
+        (ret default))
+    (dolist (x enumerable ret)
+      (when (funcall predicate x)
+        (when found-value
+          (error "more than one element present in the enumerable matches predicate"))
+        (setf found-value t
+              ret x)))))
+
 (defmethod skip ((enumerable list) count)
   (cond
     ((zerop count)

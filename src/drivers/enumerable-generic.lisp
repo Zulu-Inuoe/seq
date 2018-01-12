@@ -143,6 +143,25 @@
           (yield (funcall result-selector sub-elt)))
         (incf i)))))
 
+(defmethod single (enumerable &optional default)
+  (let ((found-value nil)
+        (ret default))
+    (do-enumerable (x enumerable ret)
+      (when found-value
+        (error "more than one element present in the enumerable"))
+      (setf found-value t
+            ret x))))
+
+(defmethod single* (enumerable predicate &optional default)
+  (let ((found-value nil)
+        (ret default))
+    (do-enumerable (x enumerable ret)
+      (when (funcall predicate x)
+        (when found-value
+          (error "more than one element present in the enumerable matches predicate"))
+        (setf found-value t
+              ret x)))))
+
 (defmethod skip (enumerable count)
   (with-enumerable
     (let ((enumerator (get-enumerator enumerable)))
