@@ -51,7 +51,7 @@
 (defmethod elast ((enumerable list) &optional default)
   (cond
     (enumerable
-     (last enumerable))
+     (car (last enumerable)))
     (t
      default)))
 
@@ -145,28 +145,7 @@
         (incf i)))))
 
 (defmethod take-last ((enumerable list) count)
-  (cond
-    ((zerop count)
-     nil)
-    (t
-     (let ((res (make-array count :fill-pointer t))
-           (index 0)
-           (filled nil))
-       (dolist (elt enumerable)
-         (setf (aref res index) elt)
-         (when (= (incf index) count)
-           (setf index 0)
-           (setf filled t)))
-
-       (if filled
-           ;;Organize the array by shifting things to the left by `index'
-           (loop :repeat index
-                 :do
-                    (loop :for i :from 0 :below (1- count)
-                          :do (rotatef (aref res i)
-                                       (aref res (1+ i)))))
-           (setf (fill-pointer res) index))
-       res))))
+  (last enumerable count))
 
 (defmethod take-until ((enumerable list) predicate)
   (with-enumerable
