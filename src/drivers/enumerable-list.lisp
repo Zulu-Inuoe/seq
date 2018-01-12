@@ -135,6 +135,9 @@
          :do (yield x))))))
 
 (defmethod take-every ((enumerable list) step)
+  (unless (and (integerp step)
+               (plusp step))
+    (error "step must be a positive integer, was ~A" step))
   (with-enumerable
     (let ((i 0)
           (next-index 0))

@@ -199,6 +199,9 @@
         (yield-break)))))
 
 (defmethod take-every (enumerable step)
+  (unless (and (integerp step)
+               (plusp step))
+    (error "step must be a positive integer, was ~A" step))
   (with-enumerable
     (let ((i 0)
           (next-index 0))
@@ -209,6 +212,8 @@
         (incf i)))))
 
 (defmethod take-last (enumerable count)
+  (when (minusp count)
+    (error "count cannot be negative, was ~A" count))
   (cond
     ((zerop count)
      nil)

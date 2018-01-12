@@ -186,12 +186,17 @@
       :do (yield elt))))
 
 (defmethod take-every ((enumerable sequence) step)
+  (unless (and (integerp step)
+               (plusp step))
+    (error "step must be a positive integer, was ~A" step))
   (with-enumerable
     (loop
       :for i :from 0 :below (length enumerable) :by step
       :do (yield (elt enumerable i)))))
 
 (defmethod take-last ((enumerable sequence) count)
+  (when (minusp count)
+    (error "count cannot be negative, was ~A" count))
   (let ((len (length enumerable)))
     (cond
       ((>= count len)
