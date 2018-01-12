@@ -15,6 +15,13 @@
         :do (funcall fn x))
   (values))
 
+(defmethod any* ((enumerable vector) predicate)
+  (loop
+    :for i :from 0 :below (length enumerable)
+    :if (funcall predicate (aref enumerable i))
+      :return t
+    :finally (return nil)))
+
 (defmethod eappend ((enumerable vector) element)
   (with-enumerable
     (loop
@@ -24,6 +31,13 @@
 
 (defmethod consume ((enumerable vector))
   (values))
+
+(defmethod contains ((enumerable vector) item &optional (test #'eql))
+  (loop
+    :for i :from 0 :below (length enumerable)
+    :if (funcall test item (aref enumerable i))
+      :return t
+    :finally (return nil)))
 
 (defmethod element-at ((enumerable vector) index &optional default)
   (cond

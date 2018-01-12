@@ -49,7 +49,11 @@
   (not (emptyp enumerable)))
 
 (defmethod any* ((enumerable sequence) predicate)
-  (and (find-if predicate enumerable) t))
+  (loop
+    :for i :from 0 :below (length enumerable)
+    :if (funcall predicate (elt enumerable i))
+      :return t
+    :finally (return nil)))
 
 (defmethod eappend ((enumerable sequence) element)
   (with-enumerable
@@ -62,7 +66,11 @@
   (values))
 
 (defmethod contains ((enumerable sequence) item &optional (test #'eql))
-  (find item enumerable :test test))
+  (loop
+    :for i :from 0 :below (length enumerable)
+    :if (funcall test item (elt enumerable i))
+      :return t
+    :finally (return nil)))
 
 (defmethod ecount ((enumerable sequence))
   (length enumerable))

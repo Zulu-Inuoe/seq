@@ -28,6 +28,9 @@
         t)
       nil))
 
+(defmethod any* ((enumerable list) predicate)
+  (member-if predicate enumerable))
+
 (defmethod eappend ((enumerable list) element)
   (with-enumerable
     (loop
@@ -37,6 +40,9 @@
 
 (defmethod consume ((enumerable list))
   (values))
+
+(defmethod contains ((enumerable list) item &optional (test #'eql))
+  (member item enumerable :test test))
 
 (defmethod element-at ((enumerable list) index &optional default)
   (if-let ((cell (nthcdr index enumerable)))
