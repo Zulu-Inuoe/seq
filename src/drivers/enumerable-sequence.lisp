@@ -42,6 +42,14 @@
         (and (incf index) t)
         nil)))
 
+(defmethod aggregate ((enumerable sequence) aggregator)
+  (when (emptyp enumerable)
+    (error "enumerable contains no elements."))
+  (reduce aggregator enumerable))
+
+(defmethod aggregate* ((enumerable sequence) aggregator seed)
+  (reduce aggregator enumerable :initial-value seed))
+
 (defmethod all ((enumerable sequence) predicate)
   (every predicate enumerable))
 

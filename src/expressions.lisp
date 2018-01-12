@@ -10,6 +10,24 @@
 
 (in-package #:enumerable)
 
+(defgeneric aggregate (enumerable aggregator)
+  (:documentation
+   "Applies a `aggregator' on `enumerable'.
+`aggregator' is a function of two arguments: The accumulated value, and the next element.
+  It should return the new accumulated value.
+Note: The first accumulated value is the first element of `enumerable'.
+      If `enumerable' contains only one element, `aggregator' will not be invoked.
+Signals an error if `enumerable' is empty."))
+
+(defgeneric aggregate* (enumerable aggregator seed)
+  (:documentation
+   "Applies a `aggregator' on `enumerable', initially with `seed'.
+`aggregator' is a function of two arguments: The accumulated value, and the next element.
+  It should return the new accumulated value.
+`seed' is the initial accumulated value.
+Note: If `enumerable' contains no elements, `aggregator' will not be invoked, and
+      `seed' will be returned."))
+
 (defgeneric all (enumerable predicate)
   (:documentation
    "Returns `t' if all elements in `enumerable' satisfy `predicate'."))

@@ -19,6 +19,20 @@
         :do (funcall fn x))
   (values))
 
+(defmethod aggregate (enumerable aggregator)
+  (let ((enumerator (get-enumerator enumerable)))
+    (unless (move-next enumerator)
+      (error "enumerable contains no elements."))
+    (loop
+      :with accum := (current enumerator)
+      :while (move-next enumerator)
+      :do (setf accum (funcall aggregator accum (current enumerator))))))
+
+(defmethod aggregate* (enumerable aggregator seed)
+  (let ((accum seed))
+    (do-enumerable (x enumerable accum)
+      (setf accum (funcall aggregator accum x)))))
+
 (defmethod all (enumerable predicate)
   (not (any* enumerable (complement predicate))))
 

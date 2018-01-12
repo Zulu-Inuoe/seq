@@ -16,6 +16,17 @@
 
 (5am:in-suite expressions-list)
 
+(5am:test aggregate
+  (5am:is (equal (aggregate '(0 2 4) #'+) 6))
+  (5am:is (equal (aggregate '(0) (lambda (x y) (error "fail"))) 0))
+  (5am:signals error
+    (aggregate '() #'+)))
+
+(5am:test aggregate*
+  (5am:is (equal (aggregate* '(0 2 4) #'+ 0) 6))
+  (5am:is (equal (aggregate* '(10) #'+ 5) 15))
+  (5am:is (equal (aggregate* '() #'+ 5) 5)))
+
 (5am:test all
   (5am:is (all '(0 2 4) #'evenp))
   (5am:is (not (all '(1 2 4) #'evenp)))

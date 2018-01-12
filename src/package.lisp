@@ -26,6 +26,8 @@
    #:move-next
 
    ;;;enumerable expressions
+   #:aggregate
+   #:aggregate*
    #:all
    #:any
    #:any*
