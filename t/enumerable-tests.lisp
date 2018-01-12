@@ -18,3 +18,8 @@
   :in enumerable)
 
 (5am:in-suite expressions)
+
+(defun main (&rest args)
+  (declare (ignore args))
+  (let ((result (5am:run! 'enumerable)))
+    (if result 0 -1)))
