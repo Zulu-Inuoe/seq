@@ -1,0 +1,7 @@
+ql alexandria :latest
+ql cl-cont :latest
+ql fiveam :latest
+ql asdf-flv :latest
+ql trivial-backtrace :latest
+ql lift :latest
+github trivial-cltl2 m2ym/trivial-cltl2
