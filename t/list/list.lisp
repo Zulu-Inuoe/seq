@@ -8,17 +8,20 @@
 ;;;with this software. If not, see
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
-(in-package #:enumerable-tests)
+(in-package #:enumerable-tests.list)
 
-(5am:def-suite expressions-list
+(5am:def-suite expressions.list
   :description "Tests the enumerable expressions with lists."
   :in expressions)
 
-(5am:in-suite expressions-list)
+(5am:in-suite expressions.list)
 
 (5am:test aggregate
   (5am:is (equal (aggregate '(0 2 4) #'+) 6))
-  (5am:is (equal (aggregate '(0) (lambda (x y) (error "fail"))) 0))
+  (5am:is (equal (aggregate '(0) (lambda (x y)
+                                   (declare (ignore x y))
+                                   (error "fail")))
+                 0))
   (5am:signals error
     (aggregate '() #'+)))
 
@@ -84,8 +87,8 @@
   (5am:is (= (ecount* '(0 1) #'evenp) 1)))
 
 (5am:test default-if-empty
-  (5am:is (equal (default-if-empty '() 0) '(0)))
-  (5am:is (equal (default-if-empty '(1) 0) '(1))))
+  (5am:is (equal (to-list (default-if-empty '() 0)) '(0)))
+  (5am:is (equal (to-list (default-if-empty '(1) 0)) '(1))))
 
 (5am:test distinct
   (5am:is (set-equal (to-list (distinct '(0 1 0 1 3 2)))

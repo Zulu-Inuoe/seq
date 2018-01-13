@@ -8,11 +8,8 @@
 ;;;with this software. If not, see
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
-(defpackage #:enumerable-tests
-  (:use #:alexandria #:cl #:enumerable)
+(defpackage #:enumerable-tests.list
+  (:use #:alexandria #:cl #:enumerable #:enumerable-tests)
   (:export
    ;;; Test suites
-   #:enumerable
-   #:expressions
-   #:expressions.list
-   #:expressions.vector))
+   #:expressions.list))

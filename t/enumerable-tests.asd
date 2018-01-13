@@ -1,4 +1,4 @@
-;;;enumerable - enumerable implementation for CL, using cl-cont
+;;;enumerable-tests - tests for the enumerable library
 ;;;Written in 2018 by Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>
 ;;;
 ;;;To the extent possible under law, the author(s) have dedicated all copyright
@@ -18,7 +18,14 @@
   :components
   ((:file "package")
    (:file "enumerable-tests")
-   (:file "expressions-list"))
+   (:module "list"
+    :components
+    ((:file "package")
+     (:file "list")))
+   (:module "vector"
+    :components
+    ((:file "package")
+     (:file "vector"))))
   :depends-on
   (#:enumerable
    #:fiveam))
