@@ -25,6 +25,10 @@
    #:current
    #:move-next
 
+   ;;do-enumerable
+   #:do-enumerable
+   #:define-do-enumerable-expander
+
    ;;;enumerable expressions
    #:aggregate
    #:aggregate*
