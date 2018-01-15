@@ -18,6 +18,7 @@
   :components
   ((:file "package")
    (:file "enumerable-tests")
+   (:file "do-enumerable")
    (:module "list"
     :components
     ((:file "package")

@@ -45,7 +45,8 @@
                                      (t
                                       ;;Otherwise, try and get the decl info or the derived
                                       (or (cdr (assoc 'ftype decl-info))
-                                          (%derived-fun-type (symbol-function fn)))))))
+                                          (and (fboundp fn)
+                                               (%derived-fun-type (symbol-function fn))))))))
                    ;;ftype definition is
                    (destructuring-bind (function params return-values)
                        ftype
