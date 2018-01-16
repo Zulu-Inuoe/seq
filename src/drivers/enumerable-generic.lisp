@@ -97,7 +97,7 @@
 (defmethod element-at (enumerable index &optional default)
   (efirst (skip enumerable index) default))
 
-(defmethod evalute (functions)
+(defmethod evaluate (functions)
   (with-enumerable
     (do-enumerable (fn functions)
       (yield (funcall fn)))))
