@@ -9,7 +9,6 @@
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
 (defsystem #:enumerable
-  :name "enumerable"
   :version "0.0.0.0"
   :description "enumerable"
   :author "Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>"
