@@ -55,12 +55,20 @@ depending on the output of RANDOM."
                     (progn ,@body)
                     (yield-break))))))))))
 
-(defmacro lambdae (args &body body)
+(defmacro lambdae (&whole whole args &body body)
   "Lambda who's body is enumerable."
-  `(lambda ,args
-     (with-enumerable ,@body)))
+  (multiple-value-bind (body decls doc-string)
+      (parse-body body :documentation t :whole whole)
+    `(lambda ,args
+       ,@(if doc-string (list doc-string) ())
+       ,@decls
+       (with-enumerable ,@body))))
 
-(defmacro defenumerable (name args &body body)
+(defmacro defenumerable (&whole whole name args &body body)
   "Like defun, for a function who's body is enumerable."
-  `(defun ,name ,args
-     (with-enumerable ,@body)))
+  (multiple-value-bind (body decls doc-string)
+      (parse-body body :documentation t :whole whole)
+    `(defun ,name ,args
+       ,@(if doc-string (list doc-string) ())
+       ,@decls
+       (with-enumerable ,@body))))
