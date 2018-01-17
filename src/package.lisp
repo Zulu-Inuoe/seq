@@ -18,6 +18,10 @@
    #:yield
    #:yield-break
 
+   ;;enumerable
+   #:enumerable
+   #:enumerablep
+
    #:map-enumerable
    #:get-enumerator
 

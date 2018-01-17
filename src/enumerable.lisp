@@ -10,6 +10,10 @@
 
 (in-package #:enumerable)
 
+(deftype enumerable ()
+  "A type which can be enumerated."
+  '(satisfies enumerablep))
+
 (defgeneric map-enumerable (fn enumerable)
   (:documentation
    "Apply `fn' to every element in `enumerable'."))

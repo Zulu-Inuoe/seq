@@ -98,3 +98,9 @@ and t2 is not a subtype of t1."
           (declare (ignorable ,iter-type ,iter-var ,iter-enum ,iter-res ,iter-body ,iter-env))
           ,@body))
        ',type)))
+
+(defun enumerablep (x)
+  (and
+   (or (member x *%do-enumerable-expanders* :key #'car :test #'typep)
+       (compute-applicable-methods #'get-enumerator (list x)))
+   t))
