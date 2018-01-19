@@ -53,6 +53,7 @@
    #:except
    #:efirst
    #:efirst*
+   #:group-by
    #:elast
    #:elast*
    #:prepend

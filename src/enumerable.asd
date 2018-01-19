@@ -21,6 +21,7 @@
    (:file "builtin-expanders")
    (:file "do-enumerable")
    (:file "with-enumerable")
+   (:file "grouping")
    (:file "expressions")
    (:module "drivers"
     :components

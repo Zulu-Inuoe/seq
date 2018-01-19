@@ -99,6 +99,13 @@ Note: If `enumerable' contains no elements, `aggregator' will not be invoked, an
   (:documentation
    "Returns the first element in `enumerable' that satisfies `predicate', or `default' if no such element exists."))
 
+(defgeneric group-by (enumerable key &key test selector result-selector)
+  (:documentation
+   "Groups elements in `enumerable' by `key'.
+`test' will be used to test keys for equality. defaults to `eql'
+`selector' a function of one argument: each element
+`result-selector' a function of two arguments: the group key, and an `enumerable' of its members."))
+
 (defgeneric elast (enumerable &optional default)
   (:documentation
    "Returns the last element in `enumerable', or `default' if no element is available."))

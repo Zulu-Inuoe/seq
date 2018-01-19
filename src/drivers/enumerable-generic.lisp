@@ -114,6 +114,18 @@
     (when (funcall predicate x)
       (return-from efirst* x))))
 
+(defmethod group-by (enumerable key
+                     &key
+                       (test #'eql)
+                       (selector #'identity)
+                       (result-selector #'make-grouping))
+  (with-enumerable
+    (do-enumerable (k (distinct (select enumerable key) test))
+      (yield
+       (funcall result-selector k (select
+                                   (where enumerable (lambda (elt) (funcall test k (funcall key elt))))
+                                   selector))))))
+
 (defmethod elast (enumerable &optional default)
   (let ((last-res default))
     (do-enumerable (x enumerable last-res)
