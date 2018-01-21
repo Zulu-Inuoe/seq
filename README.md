@@ -50,6 +50,25 @@ various generator style algorithms on which they act.
   (print sym)) ; prints.. a lot
 ```
 
+## arrows
+
+It might be worthwhile to also use one of the "arrow" packages with **enumerable**
+for better legibility. Check out [cl-arrows](https://github.com/nightfly19/cl-arrows) or
+[arrow-macros](https://github.com/hipeta/arrow-macros).
+In the [serapeum](https://github.com/TBRSS/serapeum), the symbol `~>` is used instead of `->`
+
+Examples:
+
+``` common-lisp
+;; Get a list of 5 random numbers
+(-> (with-enumerable (loop (yield (random 10000)))) ; random numbers
+    (where #'evenp) ; that are even
+    (take 5)  ; take 5 of them
+    (to-list)) ; as a list
+=>
+(7702 8872 2114 8144 7488) ; for example
+```
+
 ## Defining new enumerable types
 
 Note that the CL type `sequence` already has a driver, so if your type
