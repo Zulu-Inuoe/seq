@@ -9,7 +9,9 @@
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
 (defpackage #:enumerable
-  (:use #:alexandria #:cl)
+  (:use
+   #:alexandria
+   #:cl)
   (:export
    ;;;with-enumerable
    #:with-enumerable
@@ -18,7 +20,7 @@
    #:yield
    #:yield-break
 
-   ;;enumerable
+   ;;;enumerable
    #:enumerable
    #:enumerablep
 
@@ -29,9 +31,14 @@
    #:current
    #:move-next
 
-   ;;do-enumerable
+   ;;;do-enumerable
    #:do-enumerable
    #:define-do-enumerable-expander
+
+   ;;;grouping
+   #:grouping
+   #:grouping-key
+   #:make-grouping
 
    ;;;enumerable expressions
    #:aggregate
