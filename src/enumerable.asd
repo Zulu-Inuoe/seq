@@ -15,7 +15,8 @@
   :license "CC0 <http://creativecommons.org/publicdomain/zero/1.0/>"
   :serial t
   :components
-  ((:file "package")
+  ((:static-file "qlfile")
+   (:file "package")
    (:file "enumerable")
    (:file "do-enumerable-expander")
    (:file "builtin-expanders")
