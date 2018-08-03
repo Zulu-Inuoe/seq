@@ -18,7 +18,7 @@
   (defun %expression-type (exp env)
     (setf exp (macroexpand exp env))
     (cond
-      ((constantp exp)
+      ((constantp exp env)
        ;;Constant expression, just get its type
        (type-of exp))
       ((symbolp exp)
