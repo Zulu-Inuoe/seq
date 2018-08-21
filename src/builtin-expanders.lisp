@@ -34,3 +34,8 @@
                (return (let ((,var)) (declare (ignorable ,var)) ,result)))
              (let ((,var (cons ,key ,value)))
                ,@body))))))
+#+sbcl
+(define-do-enumerable-expander sequence
+    (type var enumerable result body env)
+  `(sb-sequence:dosequence (,var ,enumerable ,result)
+     ,@body))

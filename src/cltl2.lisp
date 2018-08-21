@@ -7,7 +7,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package :trivial-cltl2)
-    (defpackage :trivial-cltl2
+    (defpackage #:trivial-cltl2
       (:nicknames :cltl2)
       (:use :cl
        #+sbcl :sb-cltl2
