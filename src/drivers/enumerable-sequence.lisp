@@ -11,8 +11,7 @@
 (in-package #:enumerable)
 
 (defmethod map-enumerable (fn (enumerable sequence))
-  (loop :for i :from 0 :below (length enumerable)
-        :do (funcall fn (elt enumerable i)))
+  (map nil fn enumerable)
   (values))
 
 (defclass sequence-enumerator ()
