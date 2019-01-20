@@ -14,32 +14,30 @@
   (map nil fn enumerable)
   (values))
 
-(defclass sequence-enumerator ()
-  ((sequence
-    :type sequence
-    :initarg :sequence
-    :initform (error "must specify sequence"))
-   (index
-    :type (integer 0 *)
-    :initform 0)))
+(defstruct (%sequence-enumerator
+            (:conc-name nil)
+            (:constructor %make-sequence-enumerator (%sequence-enumerator-sequence))
+            (:copier nil))
+  (%sequence-enumerator-sequence (required-argument '%sequence-enumerator-sequence)
+   :type sequence
+   :read-only t)
+  (%sequence-enumerator-position -1
+   :type (integer -1 *)))
 
 (defmethod get-enumerator ((enumerable sequence))
-  (make-instance 'sequence-enumerator :sequence enumerable))
+  (%make-sequence-enumerator enumerable))
 
-(defmethod current ((enumerator sequence-enumerator))
-  (with-slots (sequence index)
-      enumerator
-    (if (and (> index 0)
-             (<= index (length sequence)))
-        (elt sequence (1- index))
-        nil)))
+(defmethod current ((enumerator %sequence-enumerator))
+  (unless (or (= -1 (%sequence-enumerator-position enumerator))
+              (= (%sequence-enumerator-position enumerator) (length (%sequence-enumerator-sequence enumerator))))
+    (aref (%sequence-enumerator-sequence enumerator) (%sequence-enumerator-position enumerator))))
 
-(defmethod move-next ((enumerator sequence-enumerator))
-  (with-slots (sequence index)
-      enumerator
-    (if (< index (length sequence))
-        (and (incf index) t)
-        nil)))
+(defmethod move-next ((enumerator %vector-enumerator))
+  (when (< (%vector-enumerator-position enumerator)
+           (length (%vector-enumerator-vector enumerator)))
+    (incf (%vector-enumerator-position enumerator))
+    (/= (%vector-enumerator-position enumerator)
+        (length (%vector-enumerator-vector enumerator)))))
 
 (defmethod aggregate ((enumerable sequence) aggregator)
   (when (emptyp enumerable)

@@ -15,6 +15,31 @@
         :do (funcall fn x))
   (values))
 
+(defstruct (%vector-enumerator
+            (:conc-name nil)
+            (:constructor %make-vector-enumerator (%vector-enumerator-vector))
+            (:copier nil))
+  (%vector-enumerator-vector (required-argument '%vector-enumerator-vector)
+   :type vector
+   :read-only t)
+  (%vector-enumerator-position -1
+   :type (integer -1 #.array-dimension-limit)))
+
+(defmethod get-enumerator ((enumerable vector))
+  (%make-vector-enumerator enumerable))
+
+(defmethod current ((enumerator %vector-enumerator))
+  (unless (or (= -1 (%vector-enumerator-position enumerator))
+              (= (%vector-enumerator-position enumerator) (length (%vector-enumerator-vector enumerator))))
+    (aref (%vector-enumerator-vector enumerator) (%vector-enumerator-position enumerator))))
+
+(defmethod move-next ((enumerator %vector-enumerator))
+  (when (< (%vector-enumerator-position enumerator)
+           (length (%vector-enumerator-vector enumerator)))
+    (incf (%vector-enumerator-position enumerator))
+    (/= (%vector-enumerator-position enumerator)
+        (length (%vector-enumerator-vector enumerator)))))
+
 (defmethod any* ((enumerable vector) predicate)
   (loop
     :for i :from 0 :below (length enumerable)
