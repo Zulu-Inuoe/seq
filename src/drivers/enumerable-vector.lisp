@@ -202,11 +202,18 @@
            (incf i)))))
 
 (defmethod take ((enumerable vector) count)
-  (with-enumerable
-    (loop
-      :repeat count
-      :for x :across enumerable
-      :do (yield x))))
+  (let ((len (min (length enumerable) count)))
+    (cond
+      ((zerop len)
+       nil)
+      ((= len (length enumerable))
+       enumerable)
+      (t
+       (with-enumerable
+         (loop
+           :repeat count
+           :for x :across enumerable
+           :do (yield x)))))))
 
 (defmethod take-every ((enumerable vector) step)
   (unless (and (integerp step)

@@ -185,12 +185,16 @@
         :do (yield (elt enumerable i))))))
 
 (defmethod take ((enumerable sequence) count)
-  (with-enumerable
-    (loop
-      :for i :from 0 :below (length enumerable)
-      :while (< i count)
-      :for elt := (elt enumerable i)
-      :do (yield elt))))
+  (cond
+    ((zerop count)
+     nil)
+    (t
+     (with-enumerable
+       (loop
+         :for i :from 0 :below (length enumerable)
+         :while (< i count)
+         :for elt := (elt enumerable i)
+         :do (yield elt))))))
 
 (defmethod take-every ((enumerable sequence) step)
   (unless (and (integerp step)
