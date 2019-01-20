@@ -212,10 +212,12 @@
   (unless (and (integerp step)
                (plusp step))
     (error "step must be a positive integer, was ~A" step))
-  (with-enumerable
-    (loop
-      :for i :from 0 :below (length enumerable) :by step
-      :do (yield (aref enumerable i)))))
+  (if (= step 1)
+      enumerable
+      (with-enumerable
+        (loop
+          :for i :below (length enumerable) :by step
+          :do (yield (aref enumerable i))))))
 
 (defmethod take-last ((enumerable vector) count)
   (when (minusp count)

@@ -164,14 +164,16 @@
   (unless (and (integerp step)
                (plusp step))
     (error "step must be a positive integer, was ~A" step))
-  (with-enumerable
-    (let ((i 0)
-          (next-index 0))
-      (dolist (elt enumerable)
-        (when (= i next-index)
-          (yield elt)
-          (incf next-index step))
-        (incf i)))))
+  (if (= step 1)
+      enumerable
+      (with-enumerable
+        (let ((i 0)
+              (next-index 0))
+          (dolist (elt enumerable)
+            (when (= i next-index)
+              (yield elt)
+              (incf next-index step))
+            (incf i))))))
 
 (defmethod take-last ((enumerable list) count)
   (last enumerable count))
