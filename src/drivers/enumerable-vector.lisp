@@ -261,6 +261,16 @@
       :if (funcall predicate x)
         :do (yield x))))
 
+(defmethod window ((enumerable vector) size &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
+  (with-enumerable
+    (loop
+      :for pos :below (length enumerable) :by size
+      :for len := (min size (- (length enumerable) pos))
+      :do
+         (yield (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                         enumerable
+                         :start2 pos)))))
+
 (defmethod to-vector ((enumerable vector) &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
   (make-array (length enumerable)
               :element-type element-type

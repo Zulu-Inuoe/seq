@@ -302,6 +302,25 @@
       (when (funcall predicate x)
         (yield x)))))
 
+(defmethod window (enumerable size &key (element-type t) adjustable fill-pointer-p)
+  (with-enumerable
+    (loop
+      :with buf := (make-array size :element-type element-type)
+      :with enumerator := (get-enumerator enumerable)
+      :do
+         (loop
+           :for i :below size
+           :while (move-next enumerator)
+           :do (setf (aref buf i) (current enumerator))
+           :finally
+              (cond
+                ((zerop i)
+                 (yield-break))
+                ((= i size) ; Full window
+                 (yield (make-array i :element-type element-type :initial-contents buf :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+                (t ; Partial window
+                 (yield (replace (make-array i :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf))))))))
+
 (defmethod to-list (enumerable)
   (let ((res ()))
     (do-enumerable (x enumerable)

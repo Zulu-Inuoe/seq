@@ -250,6 +250,12 @@
   (5am:is (equal (to-list (where #(0 2 4 8) #'oddp)) '()))
   (5am:is (equal (to-list (where #(0 2 4 8) #'evenp)) '(0 2 4 8))))
 
+(5am:test window
+  (5am:is (equalp (to-list (window #(0 1 2 3) 1)) '(#(0) #(1) #(2) #(3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 2)) '(#(0 1) #(2 3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 3)) '(#(0 1 2) #(3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 4)) '(#(0 1 2 3)))))
+
 (5am:test to-list
   (5am:is (equal (to-list #(1 2 3)) '(1 2 3)))
   (5am:is (equal (to-list #()) '()))

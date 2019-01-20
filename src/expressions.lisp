@@ -205,14 +205,23 @@ If more than one element matches `predicate', an error is signalled instead."))
   (:documentation
    "Filters `enumerable' to elements that match `predicate'."))
 
+(defgeneric window (enumerable size &key element-type adjustable fill-pointer-p)
+  (:documentation
+   "Generates an `enumerable' with windowed subsequence of `enumerable' of size `size'.
+Each subsequence is a fresh `vector' of size [1,size].
+`element-type' - as `make-array'
+`adjustable' - as `make-array'
+`fill-pointer-p' - a generalized boolean. if true, the resulting vector shall
+                   have a fill pointer initialized to the size of the window."))
+
 (defgeneric to-list (enumerable)
   (:documentation
    "Creates a list from the elements of `enumerable'."))
 
 (defgeneric to-vector (enumerable &key element-type adjustable fill-pointer-p)
   (:documentation
-   "Creates a a vector from the elements in `enumerable'.
+   "Creates a a `vector' from the elements in `enumerable'.
 `element-type' - as `make-array'
 `adjustable' - as `make-array'
 `fill-pointer-p' - a generalized boolean. if true, the resulting vector shall
-                   have a fill pointer initialized to the size of the sequence."))
+                   have a fill pointer initialized to the size of the enumerable."))

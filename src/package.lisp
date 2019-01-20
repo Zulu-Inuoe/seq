@@ -82,5 +82,6 @@
    #:take-until
    #:take-while
    #:where
+   #:window
    #:to-list
    #:to-vector))
