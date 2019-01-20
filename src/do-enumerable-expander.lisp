@@ -15,20 +15,24 @@
 
   (defun %map-expander (type var enumerable result body env)
     (declare (ignore type env))
-    `(block nil
-       (map-enumerable (lambda (,var) ,@body) ,enumerable)
-       (let ((,var nil))
-         (declare (ignorable ,var))
-         ,result)))
+    (multiple-value-bind (body decl)
+        (parse-body body)
+      `(block nil
+         (map-enumerable (lambda (,var) ,@decl (tagbody ,@body)) ,enumerable)
+         (let (,var) ,var ,result))))
 
   (defun %loop-expander (type var enumerable result body env)
     (declare (ignore type env))
     (with-gensyms (enumerator-sym)
-      `(loop
-         :with ,enumerator-sym := (get-enumerator ,enumerable)
-         :while (move-next ,enumerator-sym)
-         :do (let ((,var (current ,enumerator-sym))) ,@body)
-         :finally (return ,result))))
+      (multiple-value-bind (body decls)
+          (parse-body body)
+        `(loop
+           :with ,enumerator-sym := (get-enumerator ,enumerable)
+           :while (move-next ,enumerator-sym)
+           :do (let ((,var (current ,enumerator-sym)))
+                 ,@decls
+                 (tagbody ,@body))
+           :finally (let (,var) ,var (return ,result))))))
 
   (defun %typecase-map-expander (type var enumerable result body env)
     (with-gensyms (enumerable-sym)

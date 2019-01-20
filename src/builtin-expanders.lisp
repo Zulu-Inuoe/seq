@@ -18,22 +18,28 @@
 (define-do-enumerable-expander vector
     (type var enumerable result body env)
   (with-gensyms (vec i)
-    `(let ((,vec ,enumerable))
-       (dotimes (,i (length ,vec) (let (,var) (declare (ignorable ,var)) ,result))
-         (let ((,var (aref ,vec ,i)))
-           ,@body)))))
+    (multiple-value-bind (body decls)
+        (parse-body body)
+      `(let ((,vec ,enumerable))
+         (dotimes (,i (length ,vec) (let (,var) ,var ,result))
+           (let ((,var (aref ,vec ,i)))
+             ,@decls
+             (tagbody ,@body)))))))
 
 (define-do-enumerable-expander hash-table
     (type var enumerable result body env)
   (with-gensyms (iter more? key value)
-    `(with-hash-table-iterator (,iter ,enumerable)
+    (multiple-value-bind (body decls)
+        (parse-body body)
+      `(with-hash-table-iterator (,iter ,enumerable)
          (loop
            (multiple-value-bind (,more? ,key ,value)
                (,iter)
              (unless ,more?
-               (return (let ((,var)) (declare (ignorable ,var)) ,result)))
+               (return (let (,var) ,var ,result)))
              (let ((,var (cons ,key ,value)))
-               ,@body))))))
+               ,@decls
+               (tagbody ,@body))))))))
 #+sbcl
 (define-do-enumerable-expander sequence
     (type var enumerable result body env)
