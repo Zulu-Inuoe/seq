@@ -56,11 +56,7 @@
   (not (emptyp enumerable)))
 
 (defmethod any* ((enumerable sequence) predicate)
-  (loop
-    :for i :from 0 :below (length enumerable)
-    :if (funcall predicate (elt enumerable i))
-      :return t
-    :finally (return nil)))
+  (and (position-if predicate enumerable) t))
 
 (defmethod eappend ((enumerable sequence) element)
   (with-enumerable
@@ -73,11 +69,7 @@
   (values))
 
 (defmethod contains ((enumerable sequence) item &optional (test #'eql))
-  (loop
-    :for i :from 0 :below (length enumerable)
-    :if (funcall test item (elt enumerable i))
-      :return t
-    :finally (return nil)))
+  (and (position item enumerable :test test) t))
 
 (defmethod ecount ((enumerable sequence))
   (length enumerable))
@@ -104,12 +96,9 @@
        (elt enumerable (1- len))))))
 
 (defmethod elast* ((enumerable sequence) predicate &optional default)
-  (loop
-    :for i :from (1- (length enumerable)) :downto 0
-    :for elt := (elt enumerable i)
-    :if (funcall predicate elt)
-      :return elt
-    :finally (return default)))
+  (if-let ((pos (position-if predicate enumerable :from-end t)))
+    (elt enumerable pos)
+    default))
 
 (defmethod prepend ((enumerable sequence) element)
   (with-enumerable
@@ -157,17 +146,11 @@
        default))))
 
 (defmethod single* ((enumerable sequence) predicate &optional default)
-  (loop
-    :with found-value := nil
-    :with ret := default
-    :for i :from 0 :below (length enumerable)
-    :for elt := (elt enumerable i)
-    :if (funcall predicate elt)
-      :do (if found-value
-              (error "more than one element present in the enumerable matches predicate")
-              (setf found-value t
-                    ret elt))
-    :finally (return ret)))
+  (if-let ((pos (position-if predicate enumerable)))
+    (if (position-if predicate enumerable :start (1+ pos))
+        (error "more than one element present in the enumerable matches predicate")
+        (elt enumerable pos))
+    default))
 
 (defmethod skip ((enumerable sequence) count)
   (with-enumerable
@@ -191,29 +174,17 @@
 
 (defmethod skip-until ((enumerable sequence) predicate)
   (with-enumerable
-    (let ((i 0)
-          (len (length enumerable)))
+    (when-let ((pos (position-if predicate enumerable)))
       (loop
-        :while (and (< i len) (not (funcall predicate (elt enumerable i))))
-        :do (incf i))
-      (loop
-        :while (< i len)
-        :do
-           (yield (elt enumerable i))
-           (incf i)))))
+        :for i :from pos :below (length enumerable)
+        :do (yield (elt enumerable i))))))
 
 (defmethod skip-while ((enumerable sequence) predicate)
   (with-enumerable
-    (let ((i 0)
-          (len (length enumerable)))
+    (when-let ((pos (position-if-not predicate enumerable)))
       (loop
-        :while (and (< i len) (funcall predicate (elt enumerable i)))
-        :do (incf i))
-      (loop
-        :while (< i len)
-        :do
-           (yield (elt enumerable i))
-           (incf i)))))
+        :for i :from pos :below (length enumerable)
+        :do (yield (elt enumerable i))))))
 
 (defmethod take ((enumerable sequence) count)
   (with-enumerable
