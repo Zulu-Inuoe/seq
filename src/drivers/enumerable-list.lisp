@@ -21,12 +21,13 @@
   (car enumerator))
 
 (defmethod move-next ((enumerator cons))
-  (if (cdr enumerator)
-      (progn
-        (setf (car enumerator) (cadr enumerator))
-        (setf (cdr enumerator) (cddr enumerator))
-        t)
-      nil))
+  (cond
+    ((cdr enumerator)
+     (setf (car enumerator) (cadr enumerator)
+           (cdr enumerator) (cddr enumerator))
+     t)
+    (t
+     (setf (car enumerator) nil))))
 
 (defmethod any* ((enumerable list) predicate)
   (member-if predicate enumerable))
