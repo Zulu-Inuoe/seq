@@ -11,14 +11,10 @@
 (in-package #:enumerable)
 
 (defmethod map-enumerable (fn (enumerable hash-table))
-  (let ((cell (cons nil nil)))
-    (declare (dynamic-extent cell))
-    (maphash
-     (lambda (k v)
-       (setf (car cell) k
-             (cdr cell) v)
-       (funcall fn cell))
-     enumerable)))
+  (flet ((kv-fcall (k v)
+           (funcall fn (cons k v))))
+    (declare (dynamic-extent #'kv-fcall))
+    (maphash #'kv-fcall enumerable)))
 
 (defmethod get-enumerator ((enumerable hash-table))
   ;;with-hash-table-iterator has unspecified behavior outside of dynamic extent
