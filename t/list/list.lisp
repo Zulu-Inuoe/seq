@@ -10,6 +10,28 @@
 
 (in-package #:enumerable-tests.list)
 
+(5am:def-suite enumerable.list
+  :description "Tests for enumerable interface implementation for lists."
+  :in enumerable)
+
+(5am:in-suite enumerable.list)
+
+(5am:test list.get-enumerator
+  (5am:finishes
+    (let ((enumerator (get-enumerator '(0 1 2 3))))
+      (5am:is (move-next enumerator))
+      (5am:is (= (current enumerator) 0))
+      (5am:is (move-next enumerator))
+      (5am:is (= (current enumerator) 1))
+      (5am:is (move-next enumerator))
+      (5am:is (= (current enumerator) 2))
+      (5am:is (move-next enumerator))
+      (5am:is (= (current enumerator) 3))
+      (5am:is-false (move-next enumerator)))
+    (let ((enumerator (get-enumerator '())))
+      (5am:is-false (move-next enumerator))
+      (5am:is-false (move-next enumerator)))))
+
 (5am:def-suite expressions.list
   :description "Tests the enumerable expressions with lists."
   :in expressions)

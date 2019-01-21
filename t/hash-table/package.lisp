@@ -8,9 +8,8 @@
 ;;;with this software. If not, see
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
-(defpackage #:enumerable-tests.list
+(defpackage #:enumerable-tests.hash-table
   (:use #:alexandria #:cl #:enumerable #:enumerable-tests)
   (:export
    ;;; Test suites
-   #:enumerable.list
-   #:expressions.list))
+   #:enumerable.hash-table))

@@ -12,4 +12,5 @@
   (:use #:alexandria #:cl #:enumerable #:enumerable-tests)
   (:export
    ;;; Test suites
+   #:enumerable.vector
    #:expressions.vector))

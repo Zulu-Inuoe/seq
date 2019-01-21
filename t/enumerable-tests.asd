@@ -19,6 +19,10 @@
   ((:file "package")
    (:file "enumerable-tests")
    (:file "do-enumerable")
+   (:module "hash-table"
+    :components
+    ((:file "package")
+     (:file "hash-table")))
    (:module "list"
     :components
     ((:file "package")
