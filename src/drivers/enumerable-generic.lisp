@@ -206,10 +206,19 @@
     ((zerop count)
      enumerable)
     (t
-     (let ((res ()))
-       (do-enumerable (elt enumerable)
-         (push elt res))
-       (nreverse (nthcdr count res))))))
+     (with-enumerable
+       (let* ((enumerator (get-enumerator enumerable))
+              (queue
+                (loop
+                  :for i :below count
+                  :while (move-next enumerator)
+                  :collect (current enumerator))))
+         (when (move-next enumerator)
+           (loop
+             :with tail := (last queue)
+             :do (setf (cdr tail) (cons (current enumerator) nil))
+                 (yield (pop queue))
+             :while (move-next enumerator))))))))
 
 (defmethod skip-until (enumerable predicate)
   (with-enumerable

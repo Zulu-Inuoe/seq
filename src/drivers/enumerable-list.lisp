@@ -129,7 +129,24 @@
          (yield x))))))
 
 (defmethod skip-last ((enumerable list) count)
-  (butlast enumerable count))
+  (cond
+    ((zerop count)
+     enumerable)
+    (t
+     (with-enumerable
+       (let* ((cons enumerable)
+              (queue
+                (loop
+                  :for i :below count
+                  :while cons
+                  :collect (car cons)
+                  :do (setf cons (cdr cons)))))
+         (when cons
+           (loop
+             :with tail := (last queue)
+             :do (setf (cdr tail) (cons (car cons) nil))
+                 (yield (pop queue))
+             :while (setf cons (cdr cons)))))))))
 
 (defmethod skip-until ((enumerable list) predicate)
   (with-enumerable
