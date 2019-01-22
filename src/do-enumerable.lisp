@@ -29,7 +29,6 @@
          (cdr (assoc 'type decl-info))))
       ((listp exp)
        (destructuring-bind (fn &rest args) exp
-         (declare (ignore args))
          (cond
            ((symbolp fn)
             ;;fn
@@ -59,12 +58,25 @@
                         nil)
                        (t
                         return-values)))))
-                (:macro)
+                (:macro
+                 ;; Shouldn't be here given we macroexpanded the expression..
+                 )
                 (:special-form
-                 ;;We could code walk..
-                 ))))
+                 (case fn
+                   ((load-time-value)
+                    (%expression-type (car args) env))
+                   ((progn)
+                    (%expression-type (car (last args)) env))
+                   ((setq)
+                    (%expression-type (car (last args)) env))
+                   ((tagbody) ;; tagbody always returns nil
+                    'null)
+                   ((the #+sbcl sb-ext:truly-the)
+                    (car args))
+                   ((unwind-protect)
+                    (%expression-type (car args) env)))))))
            (t
-            ;;(lambda ...)
+            ;;((lambda ...) args)
             ;;We can't derive anything
             ))))
       (t nil)))
