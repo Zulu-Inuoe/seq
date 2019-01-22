@@ -89,4 +89,4 @@
 (defmacro do-enumerable ((var enumerable &optional result)
                          &body body
                          &environment env)
-  (%do-enumerable-expand #'%typecase-map-expander var enumerable result body env))
+  (%do-enumerable-expand #'%typecase-loop-expander var enumerable result body env))
