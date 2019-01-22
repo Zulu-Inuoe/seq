@@ -16,14 +16,36 @@
 
 (5am:in-suite do-enumerable)
 
-(defun test-fn ()
+(defun test-fn-list ()
   (list 1 2 3))
 
-(defun test-undefined-fn ()
-  (do-enumerable (x (test-fn))
-    (declare (ignore x))))
+(defun test-fn-vector ()
+  (vector 1 2 3))
 
-(5am:test undefined-fn
+(defun test-fn-hash ()
+  (plist-hash-table (list :a 1 :b 2 :c 3)))
+
+(5am:test do-enumerable.list
   (5am:finishes
-    (do-enumerable (x (test-fn))
-      (declare (ignore x)))))
+    (let ((elts ()))
+      (do-enumerable (x (the list (test-fn-list)))
+        (push x elts))
+      (setf elts (nreverse elts))
+      (5am:is (equal elts (test-fn-list))))))
+
+(5am:test do-enumerable.vector
+  (5am:finishes
+    (let ((elts ()))
+      (do-enumerable (x (the vector (test-fn-vector)))
+        (push x elts))
+      (setf elts (copy-sequence 'vector (nreverse elts)))
+      (5am:is (equalp elts (test-fn-vector))))))
+
+(5am:test do-enumerable.hash
+  (5am:finishes
+    (let ((kvps ()))
+      (do-enumerable (kvp (the hash-table (test-fn-hash)))
+        (push kvp kvps))
+      (setf kvps (alist-hash-table kvps))
+      (5am:is (equalp kvps (test-fn-hash))))))
+
