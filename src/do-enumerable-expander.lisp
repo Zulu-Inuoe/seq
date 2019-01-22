@@ -19,7 +19,7 @@
         (parse-body body)
       `(block nil
          (map-enumerable (lambda (,var) ,@decl (tagbody ,@body)) ,enumerable)
-         (let (,var) ,var ,result))))
+         ,(when result `(let (,var) ,var ,result)))))
 
   (defun %loop-expander (type var enumerable result body env)
     (declare (ignore type env))
@@ -32,7 +32,7 @@
            :do (let ((,var (current ,enumerator-sym)))
                  ,@decls
                  (tagbody ,@body))
-           :finally (let (,var) ,var (return ,result))))))
+           :finally (return ,@(when result `((let (,var) ,var ,result))))))))
 
   (defun %typecase-map-expander (type var enumerable result body env)
     (with-gensyms (enumerable-sym)

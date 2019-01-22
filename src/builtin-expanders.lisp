@@ -15,7 +15,7 @@
 (progn
   (define-do-enumerable-expander list
       (type var enumerable result body env)
-    `(dolist (,var ,enumerable ,result)
+    `(dolist (,var ,enumerable ,@(when result `(,result)))
        ,@body))
 
   (define-do-enumerable-expander vector
@@ -24,7 +24,7 @@
       (multiple-value-bind (body decls)
           (parse-body body)
         `(let ((,vec ,enumerable))
-           (dotimes (,i (length ,vec) (let (,var) ,var ,result))
+           (dotimes (,i (length ,vec) ,@(when result `((let (,var) ,var ,result))))
              (let ((,var (aref ,vec ,i)))
                ,@decls
                (tagbody ,@body))))))))
@@ -32,7 +32,7 @@
 #+sbcl
 (define-do-enumerable-expander sequence
     (type var enumerable result body env)
-  `(sb-sequence:dosequence (,var ,enumerable ,result)
+  `(sb-sequence:dosequence (,var ,enumerable ,@(when result `(,result)))
      ,@body))
 
 (define-do-enumerable-expander hash-table
@@ -45,7 +45,7 @@
            (multiple-value-bind (,more? ,key ,value)
                (,iter)
              (unless ,more?
-               (return (let (,var) ,var ,result)))
+               (return ,@(when result `((let (,var) ,var ,result)))))
              (let ((,var (cons ,key ,value)))
                ,@decls
                (tagbody ,@body))))))))
