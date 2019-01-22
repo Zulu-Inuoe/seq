@@ -216,7 +216,8 @@
          (when (move-next enumerator)
            (loop
              :with tail := (last queue)
-             :do (setf (cdr tail) (cons (current enumerator) nil))
+             :do (setf (cdr tail) (cons (current enumerator) nil)
+                       tail (cdr tail))
                  (yield (pop queue))
              :while (move-next enumerator))))))))
 

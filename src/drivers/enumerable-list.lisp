@@ -144,8 +144,9 @@
          (when cons
            (loop
              :with tail := (last queue)
-             :do (setf (cdr tail) (cons (car cons) nil))
-                 (yield (pop queue))
+             :do (setf (cdr tail) (cons (car cons) nil)
+                       tail (cdr tail))
+                (yield (pop queue))
              :while (setf cons (cdr cons)))))))))
 
 (defmethod skip-until ((enumerable list) predicate)

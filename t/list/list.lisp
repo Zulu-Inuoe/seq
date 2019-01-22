@@ -219,6 +219,7 @@
 
 (5am:test list.skip-last
   (5am:is (equal (to-list (skip-last '(0 1 2 3) 0)) '(0 1 2 3)))
+  (5am:is (equal (to-list (skip-last '(0 1 2 3) 1)) '(0 1 2)))
   (5am:is (equal (to-list (skip-last '(0 1 2 3) 2)) '(0 1)))
   (5am:is (equal (to-list (skip-last '(0 1 2 3) 4)) '()))
   (5am:is (equal (to-list (skip-last '(0 1 2 3) 2121)) '())))
