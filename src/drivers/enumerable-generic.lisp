@@ -120,11 +120,21 @@
                        (selector #'identity)
                        (result-selector #'make-grouping))
   (with-enumerable
-    (do-enumerable (k (distinct (select enumerable key) test))
-      (yield
-       (funcall result-selector k (select
-                                   (where enumerable (lambda (elt) (funcall test k (funcall key elt))))
-                                   selector))))))
+    (loop
+      :with groups := ()
+      :with enumerator := (get-enumerator enumerable)
+      :while (move-next enumerator)
+      :for elt := (funcall selector (current enumerator))
+      :for elt-key := (funcall key elt)
+      :for group := (find elt-key groups :key #'car :test test)
+      :if group
+        :do (push elt (cdr group))
+      :else
+        :do (push (cons elt-key (cons elt nil)) groups)
+      :finally
+         (loop
+           :for (group-key . elts) :in (nreverse groups)
+           :do (yield (funcall result-selector group-key (nreverse elts)))))))
 
 (defmethod elast (enumerable &optional default)
   (let ((last-res default))
