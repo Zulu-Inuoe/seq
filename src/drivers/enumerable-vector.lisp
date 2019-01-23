@@ -99,6 +99,12 @@
       :for x :across enumerable
       :do (yield x))))
 
+(defmethod ereverse ((enumerable vector))
+  (with-enumerable
+    (loop
+      :for i :from (1- (length enumerable)) :downto 0
+      :do (yield (aref enumerable i)))))
+
 (defmethod select ((enumerable vector) selector)
   (with-enumerable
     (loop

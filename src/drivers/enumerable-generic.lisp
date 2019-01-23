@@ -143,6 +143,16 @@
     (do-enumerable (x enumerable)
       (yield x))))
 
+(defmethod ereverse (enumerable)
+  (with-enumerable
+    (let ((stack ()))
+      (do-enumerable (x enumerable)
+        (push x stack))
+      (loop
+        :while stack
+        :for x := (pop stack)
+        :do (yield x)))))
+
 (defmethod select (enumerable selector)
   (with-enumerable
     (do-enumerable (x enumerable)

@@ -131,6 +131,10 @@ Note: If `enumerable' contains no elements, `aggregator' will not be invoked, an
     (loop :repeat count
           :do (yield value))))
 
+(defgeneric ereverse (enumerable)
+  (:documentation
+   "Produce `enumerable' in reversed order."))
+
 (defgeneric select (enumerable selector)
   (:documentation
    "Maps each element of `enumerable' to a new `enumerable' using `selector'.

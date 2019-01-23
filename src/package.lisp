@@ -66,6 +66,7 @@
    #:prepend
    #:range
    #:repeat
+   #:ereverse
    #:select
    #:select*
    #:select-many
