@@ -41,7 +41,8 @@
     (multiple-value-bind (body decls)
         (parse-body body)
       `(with-hash-table-iterator (,iter ,enumerable)
-         (loop
+         (do ()
+             (nil)
            (multiple-value-bind (,more? ,key ,value)
                (,iter)
              (unless ,more?

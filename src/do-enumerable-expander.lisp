@@ -26,13 +26,11 @@
     (with-gensyms (enumerator-sym)
       (multiple-value-bind (body decls)
           (parse-body body)
-        `(loop
-           :with ,enumerator-sym := (get-enumerator ,enumerable)
-           :while (move-next ,enumerator-sym)
-           :do (let ((,var (current ,enumerator-sym)))
-                 ,@decls
-                 (tagbody ,@body))
-           :finally (return ,@(when result `((let (,var) ,var ,result))))))))
+        `(do ((,enumerator-sym (get-enumerator ,enumerable)))
+             ((not (move-next ,enumerator-sym)) ,@(when result `((let (,var) ,var ,result))))
+           (let ((,var (current ,enumerator-sym)))
+             ,@decls
+             (tagbody ,@body))))))
 
   (defun %typecase-map-expander (type var enumerable result body env)
     (with-gensyms (enumerable-sym)
