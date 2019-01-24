@@ -49,3 +49,24 @@
              (let ((,var (cons ,key ,value)))
                ,@decls
                (tagbody ,@body))))))))
+
+(define-do-enumerable-expander stream
+    (type var enumerable result body env)
+  (with-gensyms (enum-sym elt-sym)
+    (multiple-value-bind (body decls)
+        (parse-body body)
+      `(let ((,enum-sym ,enumerable))
+         (cond
+           ((subtypep (stream-element-type ,enum-sym) 'integer)
+            (do ((,elt-sym (read-byte ,enum-sym nil nil) (read-byte ,enum-sym nil nil)))
+                ((null ,elt-sym) ,@(when result `((let (,var) ,var ,result))))
+              (let ((,var ,elt-sym))
+                ,@decls
+                (tagbody ,@body))))
+           ((subtypep (stream-element-type ,enum-sym) 'character)
+            (do ((,elt-sym (read-char ,enum-sym nil nil) (read-char ,enum-sym nil nil)))
+                ((null ,elt-sym) ,@(when result `((let (,var) ,var ,result))))
+              (let ((,var ,elt-sym))
+                ,@decls
+                (tagbody ,@body))))
+           (t (error "unsupported stream type '~A'" (stream-element-type ,enum-sym))))))))

@@ -31,6 +31,7 @@
      (:file "enumerable-list")
      (:file "enumerable-vector")
      (:file "enumerable-sequence")
+     (:file "enumerable-stream")
      (:file "enumerable-hash-table")
      (:file "enumerable-package")
      (:file "enumerable-continuation"))))
