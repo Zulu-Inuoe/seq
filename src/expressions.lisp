@@ -106,9 +106,9 @@ Note: If `enumerable' contains no elements, `aggregator' will not be invoked, an
 `selector' a function of one argument: each element
 `result-selector' a function of two arguments: the group key, and an `enumerable' of its members."))
 
-(defgeneric intersect (e1 e2 &optional test)
+(defgeneric intersect (first second &optional test)
   (:documentation
-   "Generates an enumerable that is the set-intersection of `e1' and `e2'
+   "Generates an enumerable that is the set-intersection of `first' and `second'
 `test' will be used to test for equality. defaults to `eql'"))
 
 (defgeneric elast (enumerable &optional default)
