@@ -61,6 +61,7 @@
    #:efirst
    #:efirst*
    #:group-by
+   #:intersect
    #:elast
    #:elast*
    #:prepend
