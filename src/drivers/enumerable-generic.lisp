@@ -26,7 +26,8 @@
     (loop
       :with accum := (current enumerator)
       :while (move-next enumerator)
-      :do (setf accum (funcall aggregator accum (current enumerator))))))
+      :do (setf accum (funcall aggregator accum (current enumerator)))
+      :finally (return accum))))
 
 (defmethod aggregate* (enumerable aggregator seed)
   (let ((accum seed))
@@ -291,8 +292,9 @@
     (let ((enumerator (get-enumerator enumerable)))
       (loop :while (move-next enumerator)
             :for x := (current enumerator)
-            :until (funcall predicate x)
-            :finally (yield x))
+            :if (funcall predicate x)
+              :do (yield x)
+                  (loop-finish))
       (loop :while (move-next enumerator)
             :for x := (current enumerator)
             :do (yield x)))))
