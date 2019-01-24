@@ -136,6 +136,30 @@
            :for (group-key . elts) :in (nreverse groups)
            :do (yield (funcall result-selector group-key (nreverse elts)))))))
 
+(defmethod intersect (e1 e2 &optional (test #'eql))
+  (with-enumerable
+    (let ((en1 (get-enumerator e1))
+          (en2 (get-enumerator e2))
+          (yielded '())
+          (encountered-e2 '()))
+      (flet ((search-encountered (elt)
+               (and (position elt encountered-e2 :test test) t))
+             (search-en2 (elt)
+               (loop
+                 :while (move-next en2)
+                 :for elt2 := (current en2)
+                 :do (pushnew elt2 encountered-e2 :test test)
+                 :if (funcall test elt elt2)
+                   :return t)))
+        (loop
+          :while (move-next en1)
+          :for elt := (current en1)
+          :if (and (or (search-encountered elt)
+                       (search-en2 elt))
+                   (not (find elt yielded :test test)))
+            :do (push elt yielded)
+                (yield elt))))))
+
 (defmethod elast (enumerable &optional default)
   (let ((last-res default))
     (do-enumerable (x enumerable last-res)
