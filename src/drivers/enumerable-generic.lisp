@@ -398,6 +398,12 @@
                 (t ; Partial window
                  (yield (replace (make-array i :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf))))))))
 
+(defmethod to-hash-table (enumerable key &key (selector #'identity) (test #'eql))
+  (let ((ret (make-hash-table :test test)))
+    (do-enumerable (x enumerable)
+      (setf (gethash (funcall key x) ret) (funcall selector x)))
+    ret))
+
 (defmethod to-list (enumerable)
   (let ((res ()))
     (do-enumerable (x enumerable)

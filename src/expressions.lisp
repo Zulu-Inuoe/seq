@@ -223,9 +223,15 @@ Each subsequence is a fresh `vector' of size [1,size].
 `fill-pointer-p' - a generalized boolean. if true, the resulting vector shall
                    have a fill pointer initialized to the size of the window."))
 
+(defgeneric to-hash-table (enumerable key &key selector test)
+  (:documentation
+   "Creates a `hash-table' from the elements of `enumerable', utilizing `key'  to generate keys for the elements.
+`selector' - a function of one argument to transform each element
+`test' - as `make-hash-table'"))
+
 (defgeneric to-list (enumerable)
   (:documentation
-   "Creates a list from the elements of `enumerable'."))
+   "Creates a `list' from the elements of `enumerable'."))
 
 (defgeneric to-vector (enumerable &key element-type adjustable fill-pointer-p)
   (:documentation

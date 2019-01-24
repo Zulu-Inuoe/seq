@@ -85,5 +85,6 @@
    #:take-while
    #:where
    #:window
+   #:to-hash-table
    #:to-list
    #:to-vector))

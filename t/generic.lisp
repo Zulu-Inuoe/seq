@@ -279,6 +279,24 @@
   (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 3)) '(#(0 1 2) #(3))))
   (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 4)) '(#(0 1 2 3)))))
 
+(5am:test generic.to-hash-table
+  (5am:is (set-equal
+           (to-list (to-hash-table '(1 2 3) #'identity))
+           '((1 . 1) (2 . 2) (3 . 3))
+           :test #'equal))
+  (5am:is (set-equal
+           (to-list (to-hash-table '() #'identity))
+           '()
+           :test #'equal))
+  (5am:is (set-equal
+           (to-list (to-hash-table '(1 2) #'1+))
+           '((2 . 1) (3 . 2))
+           :test #'equal))
+  (5am:is (set-equal
+           (to-list (to-hash-table '(1 2) #'identity :selector #'1+))
+           '((1 . 2) (2 . 3))
+           :test #'equal)))
+
 (5am:test generic.to-list
   (5am:is (equal (to-list (%make-e '(1 2 3))) '(1 2 3)))
   (5am:is (equal (to-list (%make-e '())) '()))
