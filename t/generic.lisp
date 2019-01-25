@@ -267,6 +267,18 @@
   (5am:is (equal (to-list (take-while (%make-e '(0 2 4 8)) #'oddp)) '()))
   (5am:is (equal (to-list (take-while (%make-e '(0 2 4 8)) #'evenp)) '(0 2 4 8))))
 
+(5am:test generic.eunion
+  (5am:is (set-equal (to-list (eunion (%make-e '(0 1 2 3)) (%make-e '(0 1 2 3))))
+                     '(0 1 2 3)))
+  (5am:is (set-equal (to-list (eunion (%make-e '()) (%make-e '(0 1 2 2 3))))
+                     '(0 1 2 3)))
+  (5am:is (set-equal (to-list (eunion (%make-e '(0 1 1 2 3)) (%make-e '())))
+                     '(0 1 2 3)))
+  (5am:is (set-equal (to-list (eunion (%make-e '(0 1 1)) (%make-e '(3 2 3))))
+                     '(0 1 2 3)))
+  (5am:is (= (length (to-list (eunion (%make-e '("foo" "FOO")) (%make-e '("foo" "FOO")) #'string-equal)))
+             1)))
+
 (5am:test generic.where
   (5am:is (equal (to-list (where (%make-e '(0 1 2 3)) #'evenp)) '(0 2)))
   (5am:is (equal (to-list (where (%make-e '(0 1 2 3)) #'oddp)) '(1 3)))

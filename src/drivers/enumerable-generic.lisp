@@ -373,6 +373,18 @@
           (yield x)
           (yield-break)))))
 
+(defmethod eunion (first second &optional (test #'eql))
+  (with-enumerable
+    (let ((known-elements ()))
+      (do-enumerable (x first)
+        (unless (find x known-elements :test test)
+          (yield x)
+          (push x known-elements)))
+      (do-enumerable (x second)
+        (unless (find x known-elements :test test)
+          (yield x)
+          (push x known-elements))))))
+
 (defmethod where (enumerable predicate)
   (with-enumerable
     (do-enumerable (x enumerable)

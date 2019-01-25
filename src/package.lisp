@@ -83,6 +83,7 @@
    #:take-last
    #:take-until
    #:take-while
+   #:eunion
    #:where
    #:window
    #:to-hash-table

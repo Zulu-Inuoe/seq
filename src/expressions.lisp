@@ -210,6 +210,11 @@ If more than one element matches `predicate', an error is signalled instead."))
   (:documentation
    "Takes elements from `enumerable' while they match `predicate'."))
 
+(defgeneric eunion (first second &optional test)
+  (:documentation
+   "Produces the set union between `first' and `second' by using `test'.
+`test' defaults to `eql'"))
+
 (defgeneric where (enumerable predicate)
   (:documentation
    "Filters `enumerable' to elements that match `predicate'."))
