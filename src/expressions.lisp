@@ -44,6 +44,15 @@ Note: If `enumerable' contains no elements, `aggregator' will not be invoked, an
   (:documentation
    "Appends `element' to the end of the `enumerable'."))
 
+(defgeneric batch (enumerable size &key element-type adjustable fill-pointer-p)
+  (:documentation
+   "Generates an `enumerable' with batched subsequences of `enumerable' of size `size'.
+Each subsequence is a fresh `vector' of size [1,size].
+`element-type' - as `make-array'
+`adjustable' - as `make-array'
+`fill-pointer-p' - a generalized boolean. if true, the resulting vector shall
+                   have a fill pointer initialized to the size of the window."))
+
 (defgeneric concat (first second)
   (:documentation
    "Concatenates the `enumerable's `first' and `second'."))
@@ -221,8 +230,9 @@ If more than one element matches `predicate', an error is signalled instead."))
 
 (defgeneric window (enumerable size &key element-type adjustable fill-pointer-p)
   (:documentation
-   "Generates an `enumerable' with windowed subsequence of `enumerable' of size `size'.
-Each subsequence is a fresh `vector' of size [1,size].
+   "Generates an `enumerable' with sliding-window subsequences of `enumerable' of size `size'.
+The window is a constant size `size'.
+Will yield no windows if `enumerable' does not have at least `size' elements.
 `element-type' - as `make-array'
 `adjustable' - as `make-array'
 `fill-pointer-p' - a generalized boolean. if true, the resulting vector shall

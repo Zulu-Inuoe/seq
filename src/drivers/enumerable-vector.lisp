@@ -54,6 +54,16 @@
       :do (yield x)
       :finally (yield element))))
 
+(defmethod batch ((enumerable vector) size &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
+  (with-enumerable
+    (loop
+      :for pos :below (length enumerable) :by size
+      :for len := (min size (- (length enumerable) pos))
+      :do
+         (yield (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                         enumerable
+                         :start2 pos)))))
+
 (defmethod consume ((enumerable vector))
   (values))
 
@@ -268,14 +278,21 @@
         :do (yield x))))
 
 (defmethod window ((enumerable vector) size &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
-  (with-enumerable
-    (loop
-      :for pos :below (length enumerable) :by size
-      :for len := (min size (- (length enumerable) pos))
-      :do
-         (yield (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
-                         enumerable
-                         :start2 pos)))))
+  (cond
+    ((< (length enumerable) size)
+     nil)
+    ((= (length enumerable) size)
+     (list (make-array size :initial-contents enumerable
+                            :element-type element-type
+                            :adjustable adjustable
+                            :fill-pointer (and fill-pointer-p t))))
+    (t
+     (with-enumerable
+       (loop
+         :for i :upto (- (length enumerable) size)
+         :do (yield (replace (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                             enumerable
+                             :start2 i)))))))
 
 (defmethod to-vector ((enumerable vector) &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
   (make-array (length enumerable)

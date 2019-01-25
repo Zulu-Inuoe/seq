@@ -47,6 +47,7 @@
    #:any
    #:any*
    #:eappend
+   #:batch
    #:concat
    #:consume
    #:contains

@@ -53,6 +53,25 @@
       (yield x))
     (yield element)))
 
+(defmethod batch (enumerable size &key (element-type t) adjustable fill-pointer-p)
+  (with-enumerable
+    (loop
+      :with buf := (make-array size :element-type element-type)
+      :with enumerator := (get-enumerator enumerable)
+      :do
+         (loop
+           :for i :below size
+           :while (move-next enumerator)
+           :do (setf (aref buf i) (current enumerator))
+           :finally
+              (cond
+                ((zerop i)
+                 (yield-break))
+                ((= i size) ; Full batch
+                 (yield (make-array i :element-type element-type :initial-contents buf :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+                (t ; Partial batch
+                 (yield (replace (make-array i :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf))))))))
+
 (defmethod concat (first second)
   (with-enumerable
     (do-enumerable (x first)
@@ -311,14 +330,13 @@
             :do (yield x)))))
 
 (defmethod take (enumerable count)
-  (with-enumerable
-    (when (<= count 0)
-      (yield-break))
-
-    (do-enumerable (x enumerable)
-      (yield x)
-      (when (zerop (decf count))
-        (yield-break)))))
+  (unless (<= count 0)
+    (with-enumerable
+      (loop
+        :with enumerator := (get-enumerator enumerable)
+        :for i :from 0 :below count
+        :while (move-next enumerator)
+        :do (yield (current enumerator))))))
 
 (defmethod take-every (enumerable step)
   (unless (and (integerp step)
@@ -393,22 +411,23 @@
 
 (defmethod window (enumerable size &key (element-type t) adjustable fill-pointer-p)
   (with-enumerable
-    (loop
-      :with buf := (make-array size :element-type element-type)
-      :with enumerator := (get-enumerator enumerable)
-      :do
-         (loop
-           :for i :below size
-           :while (move-next enumerator)
-           :do (setf (aref buf i) (current enumerator))
-           :finally
-              (cond
-                ((zerop i)
-                 (yield-break))
-                ((= i size) ; Full window
-                 (yield (make-array i :element-type element-type :initial-contents buf :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
-                (t ; Partial window
-                 (yield (replace (make-array i :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf))))))))
+    (let ((enumerator (get-enumerator enumerable))
+          (buf (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+      (loop
+        :for i :below size
+        :if (move-next enumerator)
+          :do (setf (aref buf i) (current enumerator))
+        :else
+          :do (yield-break))
+      (yield buf)
+
+      (loop
+        :while (move-next enumerator)
+        :for prev-window := buf :then window
+        :for window := (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+        :do (replace window prev-window :start2 1)
+            (setf (aref window (1- size)) (current enumerator))
+            (yield window)))))
 
 (defmethod to-hash-table (enumerable key &key (selector #'identity) (test #'eql))
   (let ((ret (make-hash-table :test test)))

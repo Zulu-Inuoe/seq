@@ -75,6 +75,12 @@
   (5am:is (equal (to-list (eappend #(0 1) 2)) '(0 1 2)))
   (5am:is (equal (to-list (eappend #() 0)) '(0))))
 
+(5am:test vector.batch
+  (5am:is (equalp (to-list (batch #(0 1 2 3) 1)) '(#(0) #(1) #(2) #(3))))
+  (5am:is (equalp (to-list (batch #(0 1 2 3) 2)) '(#(0 1) #(2 3))))
+  (5am:is (equalp (to-list (batch #(0 1 2 3) 3)) '(#(0 1 2) #(3))))
+  (5am:is (equalp (to-list (batch #(0 1 2 3) 4)) '(#(0 1 2 3)))))
+
 (5am:test vector.concat
   (5am:is (equal (to-list (concat #(0 1) #(2 3))) '(0 1 2 3)))
   (5am:is (equal (to-list (concat #(0 1) #())) '(0 1)))
@@ -278,9 +284,10 @@
 
 (5am:test vector.window
   (5am:is (equalp (to-list (window #(0 1 2 3) 1)) '(#(0) #(1) #(2) #(3))))
-  (5am:is (equalp (to-list (window #(0 1 2 3) 2)) '(#(0 1) #(2 3))))
-  (5am:is (equalp (to-list (window #(0 1 2 3) 3)) '(#(0 1 2) #(3))))
-  (5am:is (equalp (to-list (window #(0 1 2 3) 4)) '(#(0 1 2 3)))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 2)) '(#(0 1) #(1 2) #(2 3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 3)) '(#(0 1 2) #(1 2 3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 4)) '(#(0 1 2 3))))
+  (5am:is (equalp (to-list (window #(0 1 2 3) 5)) '())))
 
 (5am:test vector.to-list
   (5am:is (equal (to-list #(1 2 3)) '(1 2 3)))

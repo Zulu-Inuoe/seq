@@ -67,6 +67,12 @@
   (5am:is (equal (to-list (eappend (%make-e '(0 1)) 2)) '(0 1 2)))
   (5am:is (equal (to-list (eappend (%make-e '()) 0)) '(0))))
 
+(5am:test generic.batch
+  (5am:is (equalp (to-list (batch (%make-e '(0 1 2 3)) 1)) '(#(0) #(1) #(2) #(3))))
+  (5am:is (equalp (to-list (batch (%make-e '(0 1 2 3)) 2)) '(#(0 1) #(2 3))))
+  (5am:is (equalp (to-list (batch (%make-e '(0 1 2 3)) 3)) '(#(0 1 2) #(3))))
+  (5am:is (equalp (to-list (batch (%make-e '(0 1 2 3)) 4)) '(#(0 1 2 3)))))
+
 (5am:test generic.concat
   (5am:is (equal (to-list (concat (%make-e '(0 1)) (%make-e '(2 3)))) '(0 1 2 3)))
   (5am:is (equal (to-list (concat (%make-e '(0 1)) (%make-e '()))) '(0 1)))
@@ -287,9 +293,10 @@
 
 (5am:test generic.window
   (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 1)) '(#(0) #(1) #(2) #(3))))
-  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 2)) '(#(0 1) #(2 3))))
-  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 3)) '(#(0 1 2) #(3))))
-  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 4)) '(#(0 1 2 3)))))
+  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 2)) '(#(0 1) #(1 2) #(2 3))))
+  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 3)) '(#(0 1 2) #(1 2 3))))
+  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 4)) '(#(0 1 2 3))))
+  (5am:is (equalp (to-list (window (%make-e '(0 1 2 3)) 5)) '())))
 
 (5am:test generic.to-hash-table
   (5am:is (set-equal
