@@ -165,13 +165,14 @@
       :with groups := ()
       :with enumerator := (get-enumerator enumerable)
       :while (move-next enumerator)
-      :for elt := (funcall selector (current enumerator))
+      :for elt := (current enumerator)
       :for elt-key := (funcall key elt)
       :for group := (find elt-key groups :key #'car :test test)
+      :for result-elt := (funcall selector elt)
       :if group
-        :do (push elt (cdr group))
+        :do (push result-elt (cdr group))
       :else
-        :do (push (cons elt-key (cons elt nil)) groups)
+        :do (push (cons elt-key (cons result-elt nil)) groups)
       :finally
          (loop
            :for (group-key . elts) :in (nreverse groups)

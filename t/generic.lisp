@@ -150,6 +150,17 @@
   (5am:is (eq (efirst* (%make-e '(0 2 10 6)) #'oddp) nil))
   (5am:is (eq (efirst* (%make-e '(0 2 10 6)) #'oddp :sentinel) :sentinel)))
 
+(5am:test generic.group-by
+  (5am:is
+   (equal
+    (to-list
+     (group-by
+      '(("A" 2) ("A" 1) ("C" 3) ("D" 4)) #'car
+      :test #'string=
+      :result-selector (lambda (k e) (cons k (to-list e)))
+      :selector #'cadr))
+    '(("A" 2 1) ("C" 3) ("D" 4)))))
+
 (5am:test generic.intersect
   (5am:is (set-equal (to-list (intersect (%make-e '(1 2 3)) (%make-e '(1)))) '(1)))
   (5am:is (set-equal (to-list (intersect (%make-e '(1 2 3)) (%make-e '(1 2 3)))) '(1 2 3)))
