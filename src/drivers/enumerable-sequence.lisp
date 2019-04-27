@@ -30,7 +30,7 @@
 (defmethod current ((enumerator %sequence-enumerator))
   (unless (or (= -1 (%sequence-enumerator-position enumerator))
               (= (%sequence-enumerator-position enumerator) (length (%sequence-enumerator-sequence enumerator))))
-    (aref (%sequence-enumerator-sequence enumerator) (%sequence-enumerator-position enumerator))))
+    (elt (%sequence-enumerator-sequence enumerator) (%sequence-enumerator-position enumerator))))
 
 (defmethod move-next ((enumerator %vector-enumerator))
   (when (< (%vector-enumerator-position enumerator)
