@@ -14,20 +14,22 @@
   (mapc fn enumerable)
   (values))
 
+(defstruct (%list-enumerator
+            (:conc-name nil)
+            (:constructor %make-list-enumerator (%list-enumerator-current))
+            (:copier nil))
+  (%list-enumerator-current (required-argument '%list-enumerator-current)
+   :type list))
+
 (defmethod get-enumerator ((enumerable list))
-  (cons nil enumerable))
+  (%make-list-enumerator (cons nil enumerable)))
 
-(defmethod current ((enumerator cons))
-  (car enumerator))
+(defmethod current ((enumerator %list-enumerator))
+  (car (%list-enumerator-current enumerator)))
 
-(defmethod move-next ((enumerator cons))
-  (cond
-    ((cdr enumerator)
-     (setf (car enumerator) (cadr enumerator)
-           (cdr enumerator) (cddr enumerator))
-     t)
-    (t
-     (setf (car enumerator) nil))))
+(defmethod move-next ((enumerator %list-enumerator))
+  (and (setf (%list-enumerator-current enumerator) (cdr (%list-enumerator-current enumerator)))
+       t))
 
 (defmethod any* ((enumerable list) predicate)
   (member-if predicate enumerable))
