@@ -23,7 +23,7 @@
        (type-of exp))
       ((symbolp exp)
        (multiple-value-bind (bind-type local decl-info)
-           (cltl2:variable-information exp env)
+           (introspect-environment:variable-information exp env)
          (declare (ignore bind-type local))
          ;;Try and find its declared type
          (cdr (assoc 'type decl-info))))
@@ -33,7 +33,7 @@
            ((symbolp fn)
             ;;fn
             (multiple-value-bind (bind-type local decl-info)
-                (cltl2:function-information fn env)
+                (introspect-environment:function-information fn env)
               (case bind-type
                 (nil)
                 (:function

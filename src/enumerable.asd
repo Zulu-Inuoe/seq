@@ -16,7 +16,6 @@
   :serial t
   :components
   ((:static-file "qlfile")
-   (:file "cltl2")
    (:file "package")
    (:file "enumerable")
    (:file "do-enumerable-expander")
@@ -37,4 +36,5 @@
      (:file "enumerable-continuation"))))
   :depends-on
   (#:alexandria
-   #:cl-cont))
+   #:cl-cont
+   #:introspect-environment))
