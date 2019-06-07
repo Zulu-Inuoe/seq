@@ -29,4 +29,4 @@
   (seq-rest (col-seq lazy-seq)))
 
 (defmacro lazy-seq (&body body)
-  `(%make-lazy-seq (lambda () ,@body)))
+  `(%make-lazy-seq (lambda () (col-seq (progn ,@body)))))
