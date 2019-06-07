@@ -5,9 +5,7 @@
   :license "CC0 <http://creativecommons.org/publicdomain/zero/1.0/>"
   :serial t
   :components
-  ((:file "package")
-   (:file "fset"))
+  ((:file "enumerable.fset"))
   :depends-on
-  (#:alexandria
-   #:enumerable
+  (#:enumerable
    #:fset))

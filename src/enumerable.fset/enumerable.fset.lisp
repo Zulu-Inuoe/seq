@@ -1,3 +1,7 @@
+(defpackage #:enumerable.fset
+  (:use
+   #:cl))
+
 (in-package #:enumerable.fset)
 
 (defstruct (%collection-enumerator
@@ -10,13 +14,13 @@
   (%collection-enumerator-current nil
    :type t))
 
-(defmethod get-enumerator ((enumerable fset:collection))
+(defmethod enumerable:get-enumerator ((enumerable fset:collection))
   (%make-collection-enumerator (fset:iterator enumerable)))
 
-(defmethod current ((enumerator %collection-enumerator))
+(defmethod enumerable:current ((enumerator %collection-enumerator))
   (%collection-enumerator-current enumerator))
 
-(defmethod move-next ((enumerator %collection-enumerator))
+(defmethod enumerable:move-next ((enumerator %collection-enumerator))
   (multiple-value-bind (value more?)
       (funcall (%collection-enumerator-iterator enumerator) :get)
     (setf (%collection-enumerator-current enumerator) value)
@@ -32,13 +36,13 @@
   (%map-enumerator-current nil
    :type t))
 
-(defmethod get-enumerator ((enumerable fset:map))
+(defmethod enumerable:get-enumerator ((enumerable fset:map))
   (%make-map-enumerator (fset:iterator enumerable)))
 
-(defmethod current ((enumerator %map-enumerator))
+(defmethod enumerable:current ((enumerator %map-enumerator))
   (%map-enumerator-current enumerator))
 
-(defmethod move-next ((enumerator %map-enumerator))
+(defmethod enumerable:move-next ((enumerator %map-enumerator))
   (multiple-value-bind (key value more?)
       (funcall (%map-enumerator-iterator enumerator) :get)
     (setf (%map-enumerator-current enumerator) (cons key value))
