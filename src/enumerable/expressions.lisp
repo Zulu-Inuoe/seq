@@ -134,16 +134,17 @@ Each subsequence is a fresh `vector' of size [1,size].
 
 (defun range (start count)
   "Generates `count' integers starting at `count'."
-  (with-enumerable
-    (loop :for i :from start :by 1
-          :repeat count
-          :do (yield i))))
+  (labels ((recurse (i)
+             (when (< i count)
+               (lazy-seq (cons (+ i start) (recurse (1+ i)))))))
+    (recurse 0)))
 
 (defun repeat (value count)
   "Generates an enumerable that repeats `value' `count' times."
-  (with-enumerable
-    (loop :repeat count
-          :do (yield value))))
+  (labels ((recurse (i)
+             (when (< i count)
+               (lazy-seq (cons value (recurse (1+ i)))))))
+    (recurse 0)))
 
 (defgeneric ereverse (enumerable)
   (:documentation

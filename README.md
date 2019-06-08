@@ -11,17 +11,11 @@ various generator style algorithms on which they act.
 
 ``` common-lisp
 ;;Define an enumerable that represents all the natural numbers
-(defenumerable natural-numbers ()
-  (loop
-    :for i :from 1 :by 1
-    :do (yield i)))
-
-;;Alternatively
 (defun natural-numbers ()
-  (with-enumerable
-    (loop
-      :for i :from 1 :by 1
-      :do (yield i))))
+  (labels ((recurse (i)
+           (clojure-seq:lazy-seq
+             (cons i (recurse (1+ i))))))
+    (recurse 1)))
 
 ;;Print the first 50 even numbers
 (do-enumerable (n (take (where (natural-numbers) #'evenp) 50))

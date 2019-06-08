@@ -10,6 +10,22 @@
 
 (in-package #:enumerable)
 
+(defun %make-collapsed-displaced-vector (vec offset count)
+  (check-type offset array-index)
+  (check-type count array-length)
+  (labels ((recurse (vec offset count)
+             (check-type vec vector)
+             (multiple-value-bind (displaced-to displaced-offset)
+                 (array-displacement vec)
+               (cond
+                 (displaced-to
+                  (recurse displaced-to (+ offset displaced-offset) count))
+                 ((= count (length vec))
+                  vec)
+                 (t
+                  (make-array count :element-type (array-element-type vec) :displaced-to vec :displaced-index-offset offset))))))
+    (recurse vec offset count)))
+
 (defmethod map-enumerable (fn (enumerable vector))
   (loop :for x :across enumerable
         :do (funcall fn x))
@@ -47,22 +63,17 @@
       :return t
     :finally (return nil)))
 
-(defmethod eappend ((enumerable vector) element)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :do (yield x)
-      :finally (yield element))))
-
 (defmethod batch ((enumerable vector) size &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
-  (with-enumerable
-    (loop
-      :for pos :below (length enumerable) :by size
-      :for len := (min size (- (length enumerable) pos))
-      :do
-         (yield (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
-                         enumerable
-                         :start2 pos)))))
+  (labels ((recurse (pos e-len)
+             (when (< pos e-len)
+               (let ((len (min size (- e-len pos))))
+                 (lazy-seq
+                   (cons
+                    (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                             enumerable
+                             :start2 pos)
+                    (recurse (+ pos size) e-len)))))))
+    (lazy-seq (recurse 0 (length enumerable)))))
 
 (defmethod consume ((enumerable vector))
   (values))
@@ -75,24 +86,15 @@
     :finally (return nil)))
 
 (defmethod element-at ((enumerable vector) index &optional default)
-  (cond
-    ((< index (length enumerable))
-     (aref enumerable index))
-    (t
-     default)))
-
-(defmethod evaluate ((functions vector))
-  (with-enumerable
-    (loop
-      :for fn :across functions
-      :do (yield (funcall fn)))))
+  (if (< index (length enumerable))
+      (aref enumerable index)
+      default))
 
 (defmethod elast ((enumerable vector) &optional default)
   (let ((len (length enumerable)))
     (cond
       ((zerop len) default)
-      (t
-       (aref enumerable (1- len))))))
+      (t (aref enumerable (1- len))))))
 
 (defmethod elast* ((enumerable vector) predicate &optional default)
   (loop
@@ -102,58 +104,20 @@
       :return elt
     :finally (return default)))
 
-(defmethod prepend ((enumerable vector) element)
-  (with-enumerable
-    (loop
-      :initially (yield element)
-      :for x :across enumerable
-      :do (yield x))))
-
 (defmethod ereverse ((enumerable vector))
-  (with-enumerable
-    (loop
-      :for i :from (1- (length enumerable)) :downto 0
-      :do (yield (aref enumerable i)))))
-
-(defmethod select ((enumerable vector) selector)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :do (yield (funcall selector x)))))
-
-(defmethod select* ((enumerable vector) selector)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :for i :from 0 :by 1
-      :do (yield (funcall selector x i)))))
-
-(defmethod select-many ((enumerable vector) selector &optional (result-selector #'identity))
-  (with-enumerable
-    (loop
-      :for elt :across enumerable
-      :do
-         (do-enumerable (sub-elt (funcall selector elt))
-           (yield (funcall result-selector sub-elt))))))
-
-(defmethod select-many* ((enumerable vector) selector &optional (result-selector #'identity))
-  (with-enumerable
-    (loop
-      :for elt :across enumerable
-      :for i :from 0 :by 1
-      :do
-         (do-enumerable (sub-elt (funcall selector elt i))
-           (yield (funcall result-selector sub-elt))))))
+  (labels ((recurse (i)
+             (when (>= i 0)
+               (lazy-seq
+                 (cons (aref enumerable i)
+                       (recurse (1- i)))))))
+    (recurse (1- (length vector)))))
 
 (defmethod single ((enumerable vector) &optional default)
   (let ((len (length enumerable)))
     (cond
-      ((> len 1)
-       (error "more than one element present in the enumerable"))
-      ((= len 1)
-       (aref enumerable 0))
-      (t
-       default))))
+      ((> len 1) (error "more than one element present in the enumerable"))
+      ((= len 1) (aref enumerable 0))
+      (t default))))
 
 (defmethod single* ((enumerable vector) predicate &optional default)
   (loop
@@ -168,114 +132,51 @@
     :finally (return ret)))
 
 (defmethod skip ((enumerable vector) count)
-  (cond
-    ((zerop count)
-     enumerable)
-    (t
-     (with-enumerable
-       (let ((i count)
-             (len (length enumerable)))
-         (loop
-           :while (< i len)
-           :do
-              (yield (aref enumerable i))
-              (incf i)))))))
+  (let* ((len (length enumerable))
+         (remaining (- len count)))
+    (cond
+      ((<= remaining 0) nil)
+      ((>= remaining len) enumerable)
+      (t (%make-collapsed-displaced-vector enumerable count remaining)))))
 
 (defmethod skip-last ((enumerable vector) count)
   (let ((len (length enumerable)))
     (cond
-      ((>= count len)
-       nil)
-      (t
-       (with-enumerable
-         (loop :for i :from 0 :below (- len count)
-               :do (yield (aref enumerable i))))))))
+      ((>= count len) nil)
+      (t (%make-collapsed-displaced-vector enumerable 0 (min len (- len count)))))))
 
 (defmethod skip-until ((enumerable vector) predicate)
-  (with-enumerable
-    (let ((i 0)
-          (len (length enumerable)))
-      (loop
-        :while (and (< i len) (not (funcall predicate (aref enumerable i))))
-        :do (incf i))
-      (loop
-        :while (< i len)
-        :do
-           (yield (aref enumerable i))
-           (incf i)))))
+  (lazy-seq
+    (loop
+      :with len := (length enumerable)
+      :for i :below len
+      :if (funcall predicate (aref enumerable i))
+        :return (%make-collapsed-displaced-vector enumerable i (- len i)))))
 
 (defmethod skip-while ((enumerable vector) predicate)
-  (with-enumerable
-    (let ((i 0)
-          (len (length enumerable)))
-      (loop
-        :while (and (< i len) (funcall predicate (aref enumerable i)))
-        :do (incf i))
-      (loop
-        :while (< i len)
-        :do
-           (yield (aref enumerable i))
-           (incf i)))))
+  (lazy-seq
+    (loop
+      :with len := (length enumerable)
+      :for i :below len
+      :if (not (funcall predicate (aref enumerable i)))
+        :return (%make-collapsed-displaced-vector enumerable i (- len i)))))
 
 (defmethod take ((enumerable vector) count)
-  (let ((len (min (length enumerable) count)))
+  (let* ((len (length enumerable))
+         (to-take (max 0 (min len count))))
     (cond
-      ((zerop len)
-       nil)
-      ((= len (length enumerable))
-       enumerable)
-      (t
-       (with-enumerable
-         (loop
-           :repeat count
-           :for x :across enumerable
-           :do (yield x)))))))
-
-(defmethod take-every ((enumerable vector) step)
-  (unless (and (integerp step)
-               (plusp step))
-    (error "step must be a positive integer, was ~A" step))
-  (if (= step 1)
-      enumerable
-      (with-enumerable
-        (loop
-          :for i :below (length enumerable) :by step
-          :do (yield (aref enumerable i))))))
+      ((zerop to-take) nil)
+      ((= to-take len) enumerable)
+      (t (%make-collapsed-displaced-vector enumerable 0 count)))))
 
 (defmethod take-last ((enumerable vector) count)
   (when (minusp count)
     (error "count cannot be negative, was ~A" count))
   (let ((len (length enumerable)))
     (cond
-      ((>= count len)
-       enumerable)
-      ((zerop count)
-       nil)
-      (t
-       (with-enumerable
-         (loop :for i :from (- len count) :below len
-               :do (yield (aref enumerable i))))))))
-
-(defmethod take-until ((enumerable vector) predicate)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :until (funcall predicate x)
-      :do (yield x))))
-
-(defmethod take-while ((enumerable vector) predicate)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :while (funcall predicate x)
-      :do (yield x))))
-
-(defmethod where ((enumerable vector) predicate)
-  (with-enumerable
-    (loop
-      :for x :across enumerable
-      :if (funcall predicate x)
-        :do (yield x))))
+      ((>= count len) enumerable)
+      ((zerop count) nil)
+      (t (%make-collapsed-displaced-vector enumerable (- len count) count)))))
 
 (defmethod window ((enumerable vector) size &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
   (cond
@@ -287,12 +188,15 @@
                             :adjustable adjustable
                             :fill-pointer (and fill-pointer-p t))))
     (t
-     (with-enumerable
-       (loop
-         :for i :upto (- (length enumerable) size)
-         :do (yield (replace (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
-                             enumerable
-                             :start2 i)))))))
+     (labels ((recurse (i end-idx)
+                (unless (> i end-idx)
+                  (lazy-seq
+                    (cons
+                     (replace (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                              enumerable
+                              :start2 i)
+                     (recurse (1+ i) end-idx))))))
+       (recurse 0 (- (length enumerable) size))))))
 
 (defmethod to-vector ((enumerable vector) &key (element-type (array-element-type enumerable)) adjustable fill-pointer-p)
   (make-array (length enumerable)

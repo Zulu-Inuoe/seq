@@ -10,6 +10,37 @@
 
 (in-package #:enumerable)
 
+(defun %enumerable->seq (e)
+  (if (compute-applicable-methods #'col-seq (list e))
+      (col-seq e)
+      (labels ((recurse (enumerator)
+                 (when (move-next enumerator)
+                   (lazy-seq
+                     (cons (current enumerator)
+                           (recurse enumerator))))))
+        (lazy-seq (recurse (get-enumerator e))))))
+
+(defmacro %lazy-enum ((var enumerable) &body body)
+  `(lazy-seq
+     (let ((,var (get-enumerator ,enumerable)))
+       ,@body)))
+
+(defun %enumerator->lazy-seq (enumerator)
+  (labels ((recurse ()
+             (when (move-next enumerator)
+               (lazy-seq
+                 (cons (current enumerator)
+                       (recurse))))))
+    (recurse)))
+
+(defun %enumerator->lazy-seq* (enumerator selector)
+  (labels ((recurse ()
+             (when (move-next enumerator)
+               (lazy-seq
+                 (cons (funcall selector (current enumerator))
+                       (recurse))))))
+    (recurse)))
+
 (defmethod map-enumerable (fn enumerable)
   ;;NOTE: default expander for do-enumerable uses map-enumerable,
   ;;so don't use it here, otherwise bad time recursion
@@ -20,85 +51,111 @@
   (values))
 
 (defmethod aggregate (enumerable aggregator)
-  (let ((enumerator (get-enumerator enumerable)))
-    (unless (move-next enumerator)
-      (error "enumerable contains no elements."))
-    (loop
-      :with accum := (current enumerator)
-      :while (move-next enumerator)
-      :do (setf accum (funcall aggregator accum (current enumerator)))
-      :finally (return accum))))
+  (let (accum
+        step)
+    (labels ((encounter-first (x)
+               (setf accum x
+                     step #'encounter-rest))
+             (encounter-rest (x)
+               (setf accum (funcall aggregator accum x))))
+      (setf step #'encounter-first)
+      (map-enumerable (lambda (x) (funcall step x)) enumerable)
+      (unless (eq step #'encounter-rest)
+        (error "enumerable contains no elements.")))
+    accum))
 
 (defmethod aggregate* (enumerable aggregator seed)
   (let ((accum seed))
-    (do-enumerable (x enumerable accum)
-      (setf accum (funcall aggregator accum x)))))
+    (map-enumerable (lambda (x)
+                      (setf accum (funcall aggregator accum x)))
+                    enumerable)
+    accum))
 
 (defmethod all (enumerable predicate)
   (not (any* enumerable (complement predicate))))
 
 (defmethod any (enumerable)
-  (do-enumerable (x enumerable nil)
-    (declare (ignore x))
-    (return t)))
+  (map-enumerable (lambda (_)
+                    (declare (ignore _))
+                    (return-from any t))
+                  enumerable)
+  nil)
 
 (defmethod any* (enumerable predicate)
-  (do-enumerable (x enumerable)
-    (when (funcall predicate x)
-      (return t))))
+  (map-enumerable (lambda (x)
+                    (when (funcall predicate x)
+                      (return-from any* t)))
+                  enumerable)
+  nil)
 
 (defmethod eappend (enumerable element)
-  (with-enumerable
-    (do-enumerable (x enumerable)
-      (yield x))
-    (yield element)))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse ()
+               (if (move-next enumerator)
+                   (lazy-seq (cons (current enumerator) (recurse)))
+                   (cons element nil))))
+      (recurse))))
+
 
 (defmethod batch (enumerable size &key (element-type t) adjustable fill-pointer-p)
-  (with-enumerable
-    (loop
-      :with buf := (make-array size :element-type element-type)
-      :with enumerator := (get-enumerator enumerable)
-      :do
-         (loop
-           :for i :below size
-           :while (move-next enumerator)
-           :do (setf (aref buf i) (current enumerator))
-           :finally
-              (cond
-                ((zerop i)
-                 (yield-break))
-                ((= i size) ; Full batch
-                 (yield (make-array i :element-type element-type :initial-contents buf :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
-                (t ; Partial batch
-                 (yield (replace (make-array i :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf))))))))
+  (check-type size (integer 1))
+  (%lazy-enum (enumerator enumerable)
+    (let ((buf (make-array size :element-type element-type)))
+      (labels ((copy-batch ()
+                 (loop
+                   :for i :below size
+                   :while (move-next enumerator)
+                   :do (setf (aref buf i) (current enumerator))
+                   :finally (return i)))
+               (recurse ()
+                 (let ((copied (copy-batch)))
+                   (cond
+                     ((zerop copied)
+                      nil)
+                     ((= copied size) ; Full batch
+                      (lazy-seq
+                        (cons
+                         (make-array copied :element-type element-type :initial-contents buf :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                         (recurse))))
+                     (t ; Partial batch
+                      (cons
+                       (replace (make-array copied :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t)) buf)
+                       nil))))))
+        (recurse)))))
 
 (defmethod concat (first second)
-  (with-enumerable
-    (do-enumerable (x first)
-      (yield x))
-    (do-enumerable (x second)
-      (yield x))))
+  (labels ((yield-first (enumerator)
+             (if (move-next enumerator)
+                 (lazy-seq
+                   (cons (current enumerator)
+                         (yield-first enumerator)))
+                 (%enumerator->lazy-seq (get-enumerator second)))))
+    (lazy-seq (yield-first (get-enumerator first)))))
 
 (defmethod consume (enumerable)
-  (do-enumerable (elt enumerable)
-    (declare (ignore elt)))
+  (map-enumerable (lambda (_) (declare (ignore _))) enumerable)
   (values))
 
 (defmethod contains (enumerable item &optional (test #'eql))
-  (any* enumerable (lambda (x) (funcall test x item))))
+  (map-enumerable (lambda (x)
+                    (when (funcall test x item)
+                      (return-from contains t)))
+                  enumerable))
 
 (defmethod ecount (enumerable)
   (let ((count 0))
-    (do-enumerable (x enumerable)
-      (declare (ignore x))
-      (incf count))
+    (map-enumerable (lambda (_)
+                      (declare (ignore _))
+                      (incf count))
+                    enumerable)
     count))
 
 (defmethod ecount* (enumerable predicate)
   (let ((count 0))
-    (do-enumerable (x enumerable)
-      (when (funcall predicate x)
-        (incf count)))
+    (map-enumerable (lambda (x)
+                      (when (funcall predicate x)
+                        (incf count)))
+                    enumerable)
     count))
 
 (defmethod default-if-empty (enumerable &optional default)
@@ -107,339 +164,319 @@
       (list default)))
 
 (defmethod distinct (enumerable &optional (test #'eql))
-  (with-enumerable
+  (%lazy-enum (enumerator enumerable)
     (let ((known-elements ()))
-      (do-enumerable (x enumerable)
-        (unless (find x known-elements :test test)
-          (yield x)
-          (push x known-elements))))))
+      (labels ((recurse ()
+                 (when (move-next enumerator)
+                   (let ((x (current enumerator)))
+                     (if (member x known-elements :test test)
+                       (recurse)
+                       (lazy-seq
+                         (push x known-elements)
+                         (cons x (recurse))))))))
+        (recurse)))))
 
 (defmethod element-at (enumerable index &optional default)
   (efirst (skip enumerable index) default))
 
 (defmethod evaluate (functions)
-  (with-enumerable
-    (do-enumerable (fn functions)
-      (yield (funcall fn)))))
+  (%lazy-enum (enumerator functions)
+    (%enumerator->lazy-seq* enumerator #'funcall)))
 
 (defmethod except (first second &optional (test #'eql))
-  (with-enumerable
-    (let ((e1 (get-enumerator first))
-          (e2 (get-enumerator second))
-          (yielded '())
-          (encountered-second '()))
-      (flet ((search-encountered (elt1)
-               (and (position elt1 encountered-second :test test) t))
-             (search-e2 (elt1)
-               (loop
-                 :while (move-next e2)
-                 :for elt2 := (current e2)
-                 :do (pushnew elt2 encountered-second :test test)
-                 :if (funcall test elt1 elt2)
-                   :return t)))
-        (loop
-          :while (move-next e1)
-          :for elt1 := (current e1)
-          :if (and (not (search-encountered elt1))
-                   (not (search-e2 elt1))
-                   (not (find elt1 yielded :test test)))
-            :do (push elt1 yielded)
-                (yield elt1))))))
+  (%lazy-enum (e1 first)
+    (let ((e2 (get-enumerator second))
+          (yielded ())
+          (encountered-second ()))
+      (labels ((search-encountered (elt1)
+                 (and (position elt1 encountered-second :test test) t))
+               (search-e2 (elt1)
+                 (loop
+                   :while (move-next e2)
+                   :for elt2 := (current e2)
+                   :do (pushnew elt2 encountered-second :test test)
+                   :if (funcall test elt1 elt2)
+                     :return t))
+               (recurse ()
+                 (when (move-next e1)
+                   (let ((elt1 (current e1)))
+                     (if (or (search-encountered elt1)
+                             (search-e2 elt1)
+                             (member elt1 yielded :test test))
+                         (recurse)
+                         (lazy-seq
+                           (push elt1 yielded)
+                           (cons elt1 (recurse))))))))
+        (recurse)))))
 
 (defmethod efirst (enumerable &optional default)
-  (do-enumerable (x enumerable default)
-    (return-from efirst x)))
+  (map-enumerable (lambda (x) (return-from efirst x)) enumerable)
+  default)
 
 (defmethod efirst* (enumerable predicate &optional default)
-  (do-enumerable (x enumerable default)
-    (when (funcall predicate x)
-      (return-from efirst* x))))
+  (map-enumerable (lambda (x)
+                    (when (funcall predicate x)
+                      (return-from efirst* x)))
+                  enumerable)
+  default)
 
 (defmethod group-by (enumerable key
                      &key
                        (test #'eql)
                        (selector #'identity)
                        (result-selector #'make-grouping))
-  (with-enumerable
-    (loop
-      :with groups := ()
-      :with enumerator := (get-enumerator enumerable)
-      :while (move-next enumerator)
-      :for elt := (current enumerator)
-      :for elt-key := (funcall key elt)
-      :for group := (find elt-key groups :key #'car :test test)
-      :for result-elt := (funcall selector elt)
-      :if group
-        :do (push result-elt (cdr group))
-      :else
-        :do (push (cons elt-key (cons result-elt nil)) groups)
-      :finally
-         (loop
-           :for (group-key . elts) :in (nreverse groups)
-           :do (yield (funcall result-selector group-key (nreverse elts)))))))
+  (lazy-seq
+    (let ((groups ()))
+      (loop
+        :with enumerator := (get-enumerator enumerable)
+        :while (move-next enumerator)
+        :for elt := (current enumerator)
+        :for elt-key := (funcall key elt)
+        :for group := (find elt-key groups :key #'car :test test)
+        :for result-elt := (funcall selector elt)
+        :if group
+          :do (push result-elt (cdr group))
+        :else
+          :do (push (cons elt-key (cons result-elt nil)) groups))
+      (labels ((recurse (groups)
+                 (when groups
+                   (lazy-seq
+                     (destructuring-bind (g-key . g-elts) (car groups)
+                       (cons (funcall result-selector g-key g-elts)
+                             (recurse (cdr groups))))))))
+        (recurse groups)))))
 
 (defmethod intersect (first second &optional (test #'eql))
-  (with-enumerable
-    (let ((e1 (get-enumerator first))
-          (e2 (get-enumerator second))
+  (%lazy-enum (e1 first)
+    (let ((e2 (get-enumerator second))
           (yielded '())
           (encountered-second '()))
-      (flet ((search-encountered (elt1)
-               (and (position elt1 encountered-second :test test) t))
-             (search-e2 (elt1)
-               (loop
-                 :while (move-next e2)
-                 :for elt2 := (current e2)
-                 :do (pushnew elt2 encountered-second :test test)
-                 :if (funcall test elt1 elt2)
-                   :return t)))
-        (loop
-          :while (move-next e1)
-          :for elt1 := (current e1)
-          :if (and (or (search-encountered elt1)
-                       (search-e2 elt1))
-                   (not (find elt1 yielded :test test)))
-            :do (push elt1 yielded)
-                (yield elt1))))))
+      (labels ((search-encountered (elt1)
+                 (and (position elt1 encountered-second :test test) t))
+               (search-e2 (elt1)
+                 (loop
+                   :while (move-next e2)
+                   :for elt2 := (current e2)
+                   :do (pushnew elt2 encountered-second :test test)
+                   :if (funcall test elt1 elt2)
+                     :return t))
+               (recurse ()
+                 (when (move-next e1)
+                   (let ((elt1 (current e1)))
+                     (if (or (not (or (search-encountered elt1)
+                                      (search-e2 elt1)))
+                             (find elt1 yielded :test test))
+                         (recurse)
+                         (lazy-seq
+                           (push elt1 yielded)
+                           (cons elt1 (recurse))))))))
+        (recurse)))))
 
 (defmethod elast (enumerable &optional default)
-  (let ((last-res default))
-    (do-enumerable (x enumerable last-res)
-      (setf last-res x))))
+  (efirst (ereverse enumerable) default))
 
 (defmethod elast* (enumerable predicate &optional default)
-  (let ((last-res default))
-    (do-enumerable (x enumerable last-res)
-      (when (funcall predicate x)
-        (setf last-res x)))))
+  (map-enumerable (lambda (x)
+                    (when (funcall predicate x)
+                      (return-from elast* x)))
+                  (ereverse enumerable))
+  default)
 
 (defmethod prepend (enumerable element)
-  (with-enumerable
-    (yield element)
-    (do-enumerable (x enumerable)
-      (yield x))))
+  (lazy-seq (cons element (%enumerable->seq enumerable))))
 
 (defmethod ereverse (enumerable)
-  (with-enumerable
+  (lazy-seq
     (let ((stack ()))
-      (do-enumerable (x enumerable)
-        (push x stack))
-      (loop
-        :while stack
-        :for x := (pop stack)
-        :do (yield x)))))
+      (map-enumerable (lambda (x) (push x stack)) enumerable)
+      stack)))
 
 (defmethod select (enumerable selector)
-  (with-enumerable
-    (do-enumerable (x enumerable)
-      (yield (funcall selector x)))))
+  (%lazy-enum (enumerator enumerable)
+    (%enumerator->lazy-seq* enumerator selector)))
 
 (defmethod select* (enumerable selector)
-  (with-enumerable
+  (%lazy-enum (enumerator enumerable)
     (let ((i 0))
-      (do-enumerable (x enumerable)
-        (yield (funcall selector x i))
-        (incf i)))))
+      (%enumerator->lazy-seq* enumerator (lambda (x)
+                                           (prog1 (funcall selector x i)
+                                             (incf i)))))))
 
 (defmethod select-many (enumerable selector &optional (result-selector #'identity))
-  (with-enumerable
-    (do-enumerable (elt enumerable)
-      (do-enumerable (sub-elt (funcall selector elt))
-        (yield (funcall result-selector sub-elt))))))
+  (%lazy-enum (enumerator (select enumerable selector))
+    (labels ((recurse ()
+               (when (move-next enumerator)
+                 (lazy-seq
+                   (concat (select (current enumerator) result-selector)
+                           (recurse))))))
+      (recurse))))
 
 (defmethod select-many* (enumerable selector &optional (result-selector #'identity))
-  (with-enumerable
-    (let ((i 0))
-      (do-enumerable (elt enumerable)
-        (do-enumerable (sub-elt (funcall selector elt i))
-          (yield (funcall result-selector sub-elt)))
-        (incf i)))))
+  (%lazy-enum (enumerator (select* enumerable selector))
+    (labels ((recurse ()
+               (when (move-next enumerator)
+                 (lazy-seq
+                   (concat (select (current enumerator) result-selector)
+                           (recurse))))))
+      (recurse))))
 
 (defmethod single (enumerable &optional default)
   (let ((found-value nil)
         (ret default))
-    (do-enumerable (x enumerable ret)
-      (when found-value
-        (error "more than one element present in the enumerable"))
-      (setf found-value t
-            ret x))))
+    (map-enumerable (lambda (x)
+                      (when found-value
+                        (error "more than one element present in the enumerable"))
+                      (setf ret x
+                            found-value t))
+                    enumerable)
+    ret))
 
 (defmethod single* (enumerable predicate &optional default)
   (let ((found-value nil)
         (ret default))
-    (do-enumerable (x enumerable ret)
-      (when (funcall predicate x)
-        (when found-value
-          (error "more than one element present in the enumerable matches predicate"))
-        (setf found-value t
-              ret x)))))
+    (map-enumerable (lambda (x)
+                      (when (funcall predicate x)
+                        (when found-value
+                          (error "more than one element present in the enumerable"))
+                        (setf ret x
+                              found-value t)))
+                    enumerable)
+    ret))
 
 (defmethod skip (enumerable count)
-  (with-enumerable
-    (let ((enumerator (get-enumerator enumerable)))
-      (unless (zerop count)
-        (loop :repeat count
-              :for valid := (move-next enumerator)
-              :while valid
-              :finally
-                 (unless valid
-                   (yield-break))))
-      (loop :while (move-next enumerator)
-            :do (yield (current enumerator))))))
+  (if (<= count 0)
+      enumerable
+      (%lazy-enum (enumerator enumerable)
+        (loop
+          :for i :from 1
+          :while (move-next enumerator)
+          :if (= i count)
+            :return (%enumerator->lazy-seq enumerator)))))
 
 (defmethod skip-last (enumerable count)
-  (cond
-    ((zerop count)
-     enumerable)
-    (t
-     (with-enumerable
-       (let* ((enumerator (get-enumerator enumerable))
-              (queue
-                (loop
-                  :for i :below count
-                  :while (move-next enumerator)
-                  :collect (current enumerator))))
-         (when (move-next enumerator)
-           (loop
-             :with tail := (last queue)
-             :do (setf (cdr tail) (cons (current enumerator) nil)
-                       tail (cdr tail))
-                 (yield (pop queue))
-             :while (move-next enumerator))))))))
+  (if (<= count 0)
+      enumerable
+      (lazy-seq
+        (let* ((enumerator (get-enumerator enumerable))
+               (queue
+                 (loop
+                   :for i :below count
+                   :while (move-next enumerator)
+                   :collect (current enumerator)))
+               (tail (last queue)))
+          (labels ((recurse ()
+                     (when (move-next enumerator)
+                       (lazy-seq
+                         (setf (cdr tail) (cons (current enumerator) nil)
+                               tail (cdr tail))
+                         (cons (pop queue)
+                               (recurse))))))
+            (recurse))))))
 
 (defmethod skip-until (enumerable predicate)
-  (with-enumerable
-    (let ((enumerator (get-enumerator enumerable)))
-      (loop :while (move-next enumerator)
-            :for x := (current enumerator)
-            :if (funcall predicate x)
-              :do (yield x)
-                  (loop-finish))
-      (loop :while (move-next enumerator)
-            :for x := (current enumerator)
-            :do (yield x)))))
+  (%lazy-enum (enumerator enumerable)
+    (loop
+      :while (move-next enumerator)
+      :for x := (current enumerator)
+      :when (funcall predicate x)
+        :return (cons x (%enumerator->lazy-seq enumerator)))))
 
 (defmethod skip-while (enumerable predicate)
-  (with-enumerable
-    (let ((enumerator (get-enumerator enumerable)))
-      (loop :while (move-next enumerator)
-            :for x := (current enumerator)
-            :while (funcall predicate x)
-            :finally (yield x))
-      (loop :while (move-next enumerator)
-            :for x := (current enumerator)
-            :do (yield x)))))
+  (%lazy-enum (enumerator enumerable)
+    (loop :while (move-next enumerator)
+          :for x := (current enumerator)
+          :unless (funcall predicate x)
+            :return (cons x (%enumerator->lazy-seq enumerator)))))
 
 (defmethod take (enumerable count)
   (unless (<= count 0)
-    (with-enumerable
-      (loop
-        :with enumerator := (get-enumerator enumerable)
-        :for i :from 0 :below count
-        :while (move-next enumerator)
-        :do (yield (current enumerator))))))
+    (%lazy-enum (enumerator enumerable)
+      (labels ((recurse (i)
+                 (when (and (< i count)
+                            (move-next enumerator))
+                   (lazy-seq
+                     (cons (current enumerator)
+                           (recurse (1+ i)))))))
+        (recurse 0)))))
 
 (defmethod take-every (enumerable step)
   (unless (and (integerp step)
                (plusp step))
     (error "step must be a positive integer, was ~A" step))
-  (with-enumerable
-    (let ((i 0)
-          (next-index 0))
-      (do-enumerable (elt enumerable)
-        (when (= i next-index)
-          (yield elt)
-          (incf next-index step))
-        (incf i)))))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse ()
+               (when (loop :repeat step
+                           :always (move-next enumerator))
+                 (lazy-seq
+                   (cons (current enumerator)
+                         (recurse))))))
+      (when (move-next enumerator)
+        (cons (current enumerator)
+              (recurse))))))
 
 (defmethod take-last (enumerable count)
   (when (minusp count)
     (error "count cannot be negative, was ~A" count))
   (cond
-    ((zerop count)
-     nil)
-    (t
-     (let ((res (make-array count :fill-pointer t))
-           (index 0)
-           (filled nil))
-       (do-enumerable (elt enumerable)
-         (setf (aref res index) elt)
-         (when (= (incf index) count)
-           (setf index 0)
-           (setf filled t)))
-
-       (if filled
-           ;;Organize the array by shifting things to the left by `index'
-           (loop :repeat index
-                 :do
-                    (loop :for i :from 0 :below (1- count)
-                          :do (rotatef (aref res i)
-                                       (aref res (1+ i)))))
-           (setf (fill-pointer res) index))
-       res))))
+    ((zerop count) nil)
+    (t (ereverse (take (ereverse enumerable) count)))))
 
 (defmethod take-until (enumerable predicate)
-  (with-enumerable
-    (do-enumerable (elt enumerable)
-      (if (funcall predicate elt)
-          (yield-break)
-          (yield elt)))))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse ()
+               (when (move-next enumerator)
+                 (let ((elt (current enumerator)))
+                   (unless (funcall predicate elt)
+                     (lazy-seq (cons elt (recurse))))))))
+      (recurse))))
 
 (defmethod take-while (enumerable predicate)
-  (with-enumerable
-    (do-enumerable (x enumerable)
-      (if (funcall predicate x)
-          (yield x)
-          (yield-break)))))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse ()
+               (when (move-next enumerator)
+                 (let ((elt (current enumerator)))
+                   (when (funcall predicate elt)
+                     (lazy-seq (cons elt (recurse))))))))
+      (recurse))))
 
 (defmethod eunion (first second &optional (test #'eql))
-  (with-enumerable
-    (let ((known-elements ()))
-      (do-enumerable (x first)
-        (unless (find x known-elements :test test)
-          (yield x)
-          (push x known-elements)))
-      (do-enumerable (x second)
-        (unless (find x known-elements :test test)
-          (yield x)
-          (push x known-elements))))))
+  (distinct (concat first second) test))
 
 (defmethod where (enumerable predicate)
-  (with-enumerable
-    (do-enumerable (x enumerable)
-      (when (funcall predicate x)
-        (yield x)))))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse ()
+               (when (move-next enumerator)
+                 (let ((elt (current enumerator)))
+                   (if (funcall predicate elt)
+                       (lazy-seq (cons elt (recurse)))
+                       (recurse))))))
+      (recurse))))
 
 (defmethod window (enumerable size &key (element-type t) adjustable fill-pointer-p)
-  (with-enumerable
-    (let ((enumerator (get-enumerator enumerable))
-          (buf (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
-      (loop
-        :for i :below size
-        :if (move-next enumerator)
-          :do (setf (aref buf i) (current enumerator))
-        :else
-          :do (yield-break))
-      (yield buf)
-
-      (loop
-        :while (move-next enumerator)
-        :for prev-window := buf :then window
-        :for window := (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
-        :do (replace window prev-window :start2 1)
-            (setf (aref window (1- size)) (current enumerator))
-            (yield window)))))
+  (%lazy-enum (enumerator enumerable)
+    (let ((buf (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+      (labels ((recurse (prev-window)
+                 (when (move-next enumerator)
+                   (lazy-seq
+                     (let ((window (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+                       (replace window prev-window :start2 1)
+                       (setf (aref window (1- size)) (current enumerator))
+                       (cons window (recurse window)))))))
+        (when (loop
+                :for i :below size
+                :always (move-next enumerator)
+                :do (setf (aref buf i) (current enumerator)))
+          (cons buf
+                (recurse buf)))))))
 
 (defmethod to-hash-table (enumerable key &key (selector #'identity) (test #'eql))
   (let ((ret (make-hash-table :test test)))
-    (do-enumerable (x enumerable)
-      (setf (gethash (funcall key x) ret) (funcall selector x)))
+    (map-enumerable (lambda (x) (setf (gethash (funcall key x) ret) (funcall selector x))) enumerable)
     ret))
 
 (defmethod to-list (enumerable)
   (let ((res ()))
-    (do-enumerable (x enumerable)
-      (push x res))
+    (map-enumerable (lambda (x) (push x res)) enumerable)
     (nreverse res)))
 
 (defmethod to-vector (enumerable &key (element-type t) adjustable fill-pointer-p)

@@ -11,15 +11,9 @@
 (defpackage #:enumerable
   (:use
    #:alexandria
-   #:cl)
+   #:cl
+   #:clojure-seq)
   (:export
-   ;;;with-enumerable
-   #:with-enumerable
-   #:lambdae
-   #:defenumerable
-   #:yield
-   #:yield-break
-
    ;;;enumerable
    #:enumerable
    #:enumerablep

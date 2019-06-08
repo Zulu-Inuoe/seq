@@ -21,20 +21,20 @@
    (:file "do-enumerable-expander")
    (:file "builtin-expanders")
    (:file "do-enumerable")
-   (:file "with-enumerable")
    (:file "grouping")
    (:file "expressions")
    (:module "drivers"
     :components
-    ((:file "enumerable-generic")
+    ((:file "enumerable-seq")
+     (:file "enumerable-generic")
      (:file "enumerable-list")
      (:file "enumerable-vector")
      (:file "enumerable-sequence")
      (:file "enumerable-stream")
      (:file "enumerable-hash-table")
-     (:file "enumerable-package")
-     (:file "enumerable-continuation"))))
+     (:file "enumerable-package"))))
   :depends-on
   (#:alexandria
    #:cl-cont
+   #:clojure-seq
    #:introspect-environment))
