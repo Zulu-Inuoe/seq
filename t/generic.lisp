@@ -152,14 +152,17 @@
 
 (5am:test generic.group-by
   (5am:is
-   (equal
+   (set-equal
+    '(("A" 2 1) ("C" 3) ("D" 4))
     (to-list
      (group-by
       '(("A" 2) ("A" 1) ("C" 3) ("D" 4)) #'car
       :test #'string=
       :result-selector (lambda (k e) (cons k (to-list e)))
       :selector #'cadr))
-    '(("A" 2 1) ("C" 3) ("D" 4)))))
+    :test (lambda (a b)
+            (and (string= (car a) (car b))
+                 (set-equal (cdr a) (cdr b)))))))
 
 (5am:test generic.intersect
   (5am:is (set-equal (to-list (intersect (%make-e '(1 2 3)) (%make-e '(1)))) '(1)))
