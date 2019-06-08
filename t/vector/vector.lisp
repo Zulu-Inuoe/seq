@@ -225,7 +225,8 @@
   (5am:is (equal (to-list (skip #(0 1 2 3) 0)) '(0 1 2 3)))
   (5am:is (equal (to-list (skip #(0 1 2 3) 2)) '(2 3)))
   (5am:is (equal (to-list (skip #(0 1 2 3) 4)) '()))
-  (5am:is (equal (to-list (skip #(0 1 2 3) 2121)) '())))
+  (5am:is (equal (to-list (skip #(0 1 2 3) 2121)) '()))
+  (5am:is (equal (to-list (skip #(0 1 2 3) -1)) '(0 1 2 3))))
 
 (5am:test vector.skip-last
   (5am:is (equal (to-list (skip-last #(0 1 2 3) 0)) '(0 1 2 3)))
