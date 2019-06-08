@@ -31,15 +31,6 @@
                        (recurse))))))
     (recurse)))
 
-(defmethod map-enumerable (fn enumerable)
-  ;;NOTE: default expander for do-enumerable uses map-enumerable,
-  ;;so don't use it here, otherwise bad time recursion
-  (loop :with enumerator := (get-enumerator enumerable)
-        :while (move-next enumerator)
-        :for x := (current enumerator)
-        :do (funcall fn x))
-  (values))
-
 (defmethod aggregate (enumerable aggregator)
   (let (accum
         step)

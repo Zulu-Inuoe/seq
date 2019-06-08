@@ -4,17 +4,30 @@
   "A type which can be enumerated."
   '(satisfies enumerablep))
 
-(defgeneric map-enumerable (fn enumerable)
-  (:documentation
-   "Apply `fn' to every element in `enumerable'.")
-  (:method (fn (enumerable null))
-    (values)))
+(defgeneric enumerablep (x)
+  (:method (x)
+    (and (compute-applicable-methods #'get-enumerator (list x)) t))
+  (:method ((obj sequence)) t)
+  (:method ((obj package)) t)
+  (:method ((obj hash-table)) t)
+  (:method ((obj stream)) t))
 
 (defgeneric get-enumerator (enumerable)
   (:documentation
    "Create an `enumerator' for `enumerable'.")
   (:method ((enumerable null))
     nil))
+
+(defgeneric map-enumerable (fn enumerable)
+  (:documentation
+   "Apply `fn' to every element in `enumerable'.")
+  (:method (fn enumerable)
+    (loop :with enumerator := (get-enumerator enumerable)
+          :while (move-next enumerator)
+          :for x := (current enumerator)
+          :do (funcall fn x)))
+  (:method (fn (enumerable null))
+    (values)))
 
 (defgeneric current (enumerator)
   (:documentation

@@ -103,8 +103,3 @@ and t2 is not a subtype of t1."
           ,@body))
        ',type)))
 
-(defun enumerablep (x)
-  (and
-   (or (member x *%do-enumerable-expanders* :key #'car :test #'typep)
-       (compute-applicable-methods #'get-enumerator (list x)))
-   t))
