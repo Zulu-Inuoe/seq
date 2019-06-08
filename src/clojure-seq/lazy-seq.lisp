@@ -12,6 +12,10 @@
   (%lazy-seq-value nil
    :type t))
 
+(defmethod print-object ((object lazy-seq) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "[~:[ ~;~S~]]" (%lazy-seq-realized-p object) (%lazy-seq-value object))))
+
 (defmethod col-seq ((lazy-seq lazy-seq))
   (with-accessors ((%lazy-seq-factory %lazy-seq-factory)
                    (%lazy-seq-realized-p %lazy-seq-realized-p)
