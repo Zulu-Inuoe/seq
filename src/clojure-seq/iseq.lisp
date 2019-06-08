@@ -17,8 +17,12 @@
 (defgeneric col-seq (col)
   (:documentation
    "Returns a `seq' on the collection `col'")
-  (:method ((col sequence))
-    col))
+  (:method ((col list))
+    col)
+  (:method ((col vector))
+    (if (zerop (length col))
+        nil
+        col)))
 
 (defgeneric seq-first (seq)
   (:documentation
@@ -36,6 +40,6 @@
     (cdr col))
   (:method ((col vector))
     (let ((len (length col)))
-      (if (= len 1)
+      (if (<= len 1)
           nil
           (%make-collapsed-displaced-vector col 1 (1- len))))))
