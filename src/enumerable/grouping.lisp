@@ -20,7 +20,7 @@
 
 (defmethod print-object ((object grouping) stream)
   (print-unreadable-object (object stream :type t)
-    (princ (grouping-key object) stream)))
+    (format stream "~S ~S" (grouping-key object) (slot-value object '%enumerable))))
 
 (defmethod get-enumerator ((enumerable grouping))
   (get-enumerator (slot-value enumerable '%enumerable)))
