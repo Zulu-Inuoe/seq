@@ -8,7 +8,52 @@
 ;;;with this software. If not, see
 ;;;<http://creativecommons.org/publicdomain/zero/1.0/>.
 
-(in-package #:enumerable)
+(defpackage #:enumerable.continuations
+  (:use
+   #:alexandria
+   #:cl
+   #:enumerable)
+  (:export
+   #:with-enumerable
+   #:lamdae
+   #:defenumerable
+   #:yield
+   #:yield-break))
+
+(in-package #:enumerable.continuations)
+
+(defclass continuation-enumerable ()
+  ((starter
+    :type (function () continuation-enumerator)
+    :initarg :starter
+    :initform (error "must supply starter"))))
+
+(defclass continuation-enumerator ()
+  ((current
+    :type t
+    :initform nil)
+   (continuation
+    :type (function () (values t boolean))
+    :initarg :continuation
+    :initform (error "must supply continuation"))))
+
+(defmethod get-enumerator ((enumerable continuation-enumerable))
+  (with-slots (starter)
+      enumerable
+    (make-instance
+     'continuation-enumerator
+     :continuation (funcall starter))))
+
+(defmethod current ((enumerator continuation-enumerator))
+  (slot-value enumerator 'current))
+
+(defmethod move-next ((enumerator continuation-enumerator))
+  (with-slots (current continuation)
+      enumerator
+    (multiple-value-bind (val valid)
+        (funcall continuation)
+      (setf current val)
+      valid)))
 
 (defmacro with-enumerable (&body body)
   "Run `body' in an enumerable context, where `yield' will yield a new value in
@@ -48,10 +93,15 @@
                                     (declare (ignore ,cc))
                                     (setf ,',cont (lambda () (values nil nil)))
                                     (values nil nil))))
-                             (do-enumerable ((var enumerable &optional result)
-                                             &body body
-                                             &environment env)
-                               (%do-enumerable-expand #'%loop-expander var enumerable result body env)))
+                             (do-enumerable ((var enumerable &optional result) &body body)
+                               (with-gensyms (enumerator-sym)
+                                 (multiple-value-bind (body decls)
+                                     (parse-body body)
+                                   `(do ((,enumerator-sym (get-enumerator ,enumerable)))
+                                        ((not (move-next ,enumerator-sym)) ,@(when result `((let (,var) ,var ,result))))
+                                      (let ((,var (current ,enumerator-sym)))
+                                        ,@decls
+                                        (tagbody ,@body)))))))
                     (progn ,@body)
                     (yield-break))))))))))
 
