@@ -1,6 +1,9 @@
 (defpackage #:enumerable-tests
   (:use #:alexandria #:cl #:enumerable)
   (:export
+   ;;; Programmatic run-tests
+   #:run-tests
+
    ;;; Test suites for base enumerable support
    #:enumerable
    #:enumerable.list

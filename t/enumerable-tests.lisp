@@ -9,7 +9,10 @@
 
 (5am:in-suite expressions)
 
+(defun run-tests ()
+  (5am:run! 'enumerable))
+
 (defun main (&rest args)
   (declare (ignore args))
-  (let ((result (5am:run! 'enumerable)))
+  (let ((result (run-tests)))
     (if result 0 -1)))
