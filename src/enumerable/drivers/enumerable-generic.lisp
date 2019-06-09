@@ -523,9 +523,10 @@
 (defmethod to-vector (enumerable &key (element-type t) adjustable fill-pointer-p)
   (let ((res ())
         (len 0))
-    (do-enumerable (x enumerable)
-      (push x res)
-      (incf len))
+    (map-enumerable (lambda (x)
+                      (push x res)
+                      (incf len))
+                    enumerable)
     (make-array len
                 :element-type element-type
                 :initial-contents (nreverse res)
