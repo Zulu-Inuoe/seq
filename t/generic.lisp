@@ -175,6 +175,18 @@
   (5am:is (eq :sentinel (elast* (%make-e '(1)) #'evenp :sentinel)))
   (5am:is (eq :sentinel (elast* (%make-e '()) #'evenp :sentinel))))
 
+(5am:test generic.order-by.sort-empty
+  (5am:is (equal () (to-list (order-by () #'identity)))))
+
+(5am:test generic.order-by.sort-numbers-identity
+  (5am:is (equal '(1 2 3) (to-list (order-by '(3 2 1) #'identity)))))
+
+(5am:test generic.order-by.sort-characters-code
+  (5am:is (equal '#.(list (code-char 1) (code-char 2) (code-char 3)) (to-list (order-by '#.(list (code-char 2) (code-char 3) (code-char 1)) #'char-code)))))
+
+(5am:test generic.order-by.sort-strings-length-minus
+  (5am:is (equal '("short" "medium" "longlong") (to-list (order-by '("longlong" "short" "medium") #'identity (lambda (a b) (- (length a) (length b))))))))
+
 (5am:test generic.prepend
   (5am:is (equal '(0 1 2) (to-list (prepend (%make-e '(1 2)) 0))))
   (5am:is (equal '(0) (to-list (prepend (%make-e '()) 0)))))

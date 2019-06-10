@@ -49,6 +49,7 @@
    #:intersect
    #:elast
    #:elast*
+   #:order-by
    #:prepend
    #:range
    #:repeat
