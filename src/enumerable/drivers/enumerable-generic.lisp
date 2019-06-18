@@ -31,6 +31,11 @@
                        (recurse))))))
     (recurse)))
 
+(defun %enumerable->lazy-seq (enumerable)
+  (if (typep enumerable 'clojure-seq:lazy-seq)
+      enumerable
+      (%enumerator->lazy-seq (get-enumerator enumerable))))
+
 (defmethod aggregate (enumerable aggregator)
   (let (accum
         step)
@@ -110,7 +115,7 @@
                  (lazy-seq
                    (cons (current enumerator)
                          (yield-first enumerator)))
-                 (%enumerator->lazy-seq (get-enumerator second)))))
+                 (%enumerable->lazy-seq second))))
     (lazy-seq (yield-first (get-enumerator first)))))
 
 (defmethod consume (enumerable)
