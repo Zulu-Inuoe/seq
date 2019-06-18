@@ -22,12 +22,12 @@
               (= (%sequence-enumerator-position enumerator) (length (%sequence-enumerator-sequence enumerator))))
     (elt (%sequence-enumerator-sequence enumerator) (%sequence-enumerator-position enumerator))))
 
-(defmethod move-next ((enumerator %vector-enumerator))
-  (when (< (%vector-enumerator-position enumerator)
-           (length (%vector-enumerator-vector enumerator)))
-    (incf (%vector-enumerator-position enumerator))
-    (/= (%vector-enumerator-position enumerator)
-        (length (%vector-enumerator-vector enumerator)))))
+(defmethod move-next ((enumerator %sequence-enumerator))
+  (when (< (%sequence-enumerator-position enumerator)
+           (length (%sequence-enumerator-sequence enumerator)))
+    (incf (%sequence-enumerator-position enumerator))
+    (/= (%sequence-enumerator-position enumerator)
+        (length (%sequence-enumerator-sequence enumerator)))))
 
 (defmethod aggregate ((enumerable sequence) aggregator)
   (when (emptyp enumerable)
