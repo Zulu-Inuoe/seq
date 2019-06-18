@@ -175,9 +175,9 @@
   (5am:is (equal '(0 1 2) (to-list (prepend #(1 2) 0))))
   (5am:is (equal '(0) (to-list (prepend #() 0)))))
 
-(5am:test vector.reverse
-  (5am:is (equal '(4 3 2 1) (to-list (reverse #(1 2 3 4)))))
-  (5am:is (equal '(1) (to-list (reverse #(1))))))
+(5am:test vector.ereverse
+  (5am:is (equal '(4 3 2 1) (to-list (ereverse #(1 2 3 4)))))
+  (5am:is (equal '(1) (to-list (ereverse #(1))))))
 
 (5am:test vector.select
   (5am:is (equal '(1 2 3) (to-list (select #(0 1 2) #'1+))))

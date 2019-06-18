@@ -191,6 +191,10 @@
   (5am:is (equal '(0 1 2) (to-list (prepend (%make-e '(1 2)) 0))))
   (5am:is (equal '(0) (to-list (prepend (%make-e '()) 0)))))
 
+(5am:test generic.ereverse
+  (5am:is (equal '(4 3 2 1) (to-list (ereverse (%make-e '(1 2 3 4))))))
+  (5am:is (equal '(1) (to-list (ereverse (%make-e '(1)))))))
+
 (5am:test generic.select
   (5am:is (equal '(1 2 3) (to-list (select (%make-e '(0 1 2)) #'1+))))
   (5am:is (equal '(1) (to-list (select (%make-e '(0)) #'1+))))

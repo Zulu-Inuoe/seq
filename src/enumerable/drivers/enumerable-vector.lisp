@@ -100,7 +100,7 @@
                (lazy-seq
                  (cons (aref enumerable i)
                        (recurse (1- i)))))))
-    (recurse (1- (length vector)))))
+    (recurse (1- (length enumerable)))))
 
 (defmethod single ((enumerable vector) &optional default)
   (let ((len (length enumerable)))
