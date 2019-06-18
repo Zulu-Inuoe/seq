@@ -18,5 +18,11 @@
   (and (setf (%seq-enumerator-current enumerator) (col-seq (seq-rest (%seq-enumerator-current enumerator))))
        t))
 
+(defmethod map-enumerable (fn (enumerable lazy-seq))
+  (loop
+    :for seq := (col-seq enumerable) :then (col-seq (seq-rest seq))
+    :while seq
+    :do (funcall fn (seq-first seq))))
+
 (defmethod get-enumerator ((col lazy-seq))
   (make-seq-enumerator col))

@@ -61,3 +61,14 @@
                 ,@decls
                 (tagbody ,@body))))
            (t (error "unsupported stream type '~A'" (stream-element-type ,enum-sym))))))))
+
+(define-do-enumerable-expander lazy-seq
+    (type var enumerable result body env)
+  (with-gensyms (seq-sym)
+    (multiple-value-bind (body decls)
+        (parse-body body)
+      `(do ((,seq-sym (col-seq ,enumerable) (col-seq (seq-rest ,seq-sym))))
+           ((null ,seq-sym) ,@(when result `((let (,var) ,var ,result))))
+         (let ((,var (seq-first ,seq-sym)))
+           ,@decls
+           (tagbody ,@body))))))
