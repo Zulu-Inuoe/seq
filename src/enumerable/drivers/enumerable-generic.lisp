@@ -337,6 +337,25 @@
       (map-enumerable (lambda (x) (push x stack)) enumerable)
       stack)))
 
+(defmethod run-length-encode (enumerable &key (test #'eql) limit)
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse (first-elt)
+               (lazy-seq
+                 (loop
+                   :for count :from 1
+                   :while (move-next enumerator)
+                   :for elt := (current enumerator)
+                   :unless (and (or (null limit)
+                                    (< count limit))
+                                (funcall test first-elt elt))
+                     :return (cons (cons first-elt count)
+                                   (recurse elt))
+                   :finally
+                      (return (list (cons first-elt count)))))))
+      (when (move-next enumerator)
+        (let* ((elt (current enumerator)))
+          (recurse elt))))))
+
 (defmethod select (enumerable selector)
   (%lazy-enum (enumerator enumerable)
     (%enumerator->lazy-seq* enumerator selector)))

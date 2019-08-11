@@ -152,6 +152,12 @@ Each subsequence is a fresh `vector' of size [1,size].
   (:documentation
    "Produce `enumerable' in reversed order."))
 
+(defgeneric run-length-encode (enumerable &key test limit)
+  (:documentation
+   "Run-length encode `enumerable' as a collection of (elt . count) conses of successive elements.
+ `test' defaults to `eql'
+ `limit' when non-nil, serves as the inclusive upper-limit of `count'"))
+
 (defgeneric select (enumerable selector)
   (:documentation
    "Maps each element of `enumerable' to a new `enumerable' using `selector'.

@@ -54,6 +54,7 @@
    #:range
    #:repeat
    #:ereverse
+   #:run-length-encode
    #:select
    #:select*
    #:select-many

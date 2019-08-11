@@ -195,6 +195,13 @@
   (5am:is (equal '(4 3 2 1) (to-list (ereverse (%make-e '(1 2 3 4))))))
   (5am:is (equal '(1) (to-list (ereverse (%make-e '(1)))))))
 
+(5am:test generic.run-length-encode.basic-encoding
+  (5am:is (equal '((nil . 10)) (to-list (run-length-encode (make-list 10)))))
+  (5am:is (equal '((0 . 1) (1 . 1) (2 . 1)) (to-list (run-length-encode '(0 1 2))))))
+
+(5am:test generic.run-length-encode.limit-elements
+  (5am:is (equal '((nil . 5) (nil . 5)) (to-list (run-length-encode (make-list 10) :limit 5)))))
+
 (5am:test generic.select
   (5am:is (equal '(1 2 3) (to-list (select (%make-e '(0 1 2)) #'1+))))
   (5am:is (equal '(1) (to-list (select (%make-e '(0)) #'1+))))
