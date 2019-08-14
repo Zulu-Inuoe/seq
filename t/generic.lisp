@@ -140,6 +140,12 @@
   (5am:is (eq nil (efirst* (%make-e '(0 2 10 6)) #'oddp)))
   (5am:is (eq :sentinel (efirst* (%make-e '(0 2 10 6)) #'oddp :sentinel))))
 
+(5am:test group-adjacent
+  (5am:is (set-equal '((1 2)) (to-list
+                               (select (group-adjacent '((0 . 1) (0 . 2)) #'car :selector #'cdr)
+                                 #'to-list))
+                     :test #'set-equal)))
+
 (5am:test generic.group-by
   (5am:is
    (set-equal

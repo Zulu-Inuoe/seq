@@ -45,6 +45,7 @@
    #:except
    #:efirst
    #:efirst*
+   #:group-adjacent
    #:group-by
    #:intersect
    #:elast

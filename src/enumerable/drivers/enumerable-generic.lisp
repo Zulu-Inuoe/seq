@@ -206,6 +206,31 @@
                   enumerable)
   default)
 
+(defmethod group-adjacent (enumerable key
+                           &key
+                             (test #'eql)
+                             (selector #'identity)
+                             (result-selector #'make-grouping))
+  (%lazy-enum (enumerator enumerable)
+    (labels ((recurse (first-elt group-key)
+               (lazy-seq
+                 (loop
+                   :with group := (list (funcall selector first-elt))
+                   :while (move-next enumerator)
+                   :for elt := (current enumerator)
+                   :for elt-key := (funcall key elt)
+                   :if (funcall test group-key elt-key)
+                     :do (push (funcall selector elt) group)
+                   :else
+                     :return (cons (funcall result-selector group-key group)
+                                   (recurse elt elt-key))
+                   :finally
+                      (return (list (funcall result-selector group-key group)))))))
+      (when (move-next enumerator)
+        (let* ((elt (current enumerator))
+               (elt-key (funcall key elt)))
+          (recurse elt elt-key))))))
+
 (defmethod group-by (enumerable key
                      &key
                        (test #'eql)

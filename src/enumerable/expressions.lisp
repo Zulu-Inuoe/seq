@@ -98,6 +98,13 @@ Each subsequence is a fresh `vector' of size [1,size].
   (:documentation
    "Returns the first element in `enumerable' that satisfies `predicate', or `default' if no such element exists."))
 
+(defgeneric group-adjacent (enumerable key &key test selector result-selector)
+  (:documentation
+   "Groups adjacent elements in `enumerable' by `key'.
+`test' will be used to test keys for equality. defaults to `eql'
+`selector' a function of one argument: each element
+`result-selector' a function of two arguments: the group key, and an `enumerable' of its members."))
+
 (defgeneric group-by (enumerable key &key test selector result-selector)
   (:documentation
    "Groups elements in `enumerable' by `key'.
