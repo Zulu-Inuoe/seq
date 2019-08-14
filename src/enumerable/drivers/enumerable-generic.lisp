@@ -367,8 +367,8 @@
 
 (defmethod run-length-encode (enumerable &key (test #'eql) limit)
   (%lazy-enum (enumerator enumerable)
-    (labels ((recurse (first-elt)
-               (lazy-seq
+    (when (move-next enumerator)
+      (labels ((recurse (first-elt)
                  (loop
                    :for count :from 1
                    :while (move-next enumerator)
@@ -377,11 +377,10 @@
                                     (< count limit))
                                 (funcall test first-elt elt))
                      :return (cons (cons first-elt count)
-                                   (recurse elt))
+                                   (lazy-seq (recurse elt)))
                    :finally
-                      (return (list (cons first-elt count)))))))
-      (when (move-next enumerator)
-        (let* ((elt (current enumerator)))
+                      (return (list (cons first-elt count))))))
+        (let ((elt (current enumerator)))
           (recurse elt))))))
 
 (defmethod select (enumerable selector)
