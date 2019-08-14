@@ -5,9 +5,8 @@
       (col-seq e)
       (labels ((recurse (enumerator)
                  (when (move-next enumerator)
-                   (lazy-seq
-                     (cons (current enumerator)
-                           (recurse enumerator))))))
+                   (cons (current enumerator)
+                         (lazy-seq (recurse enumerator))))))
         (lazy-seq (recurse (get-enumerator e))))))
 
 (defmacro %lazy-enum ((var enumerable) &body body)
@@ -18,17 +17,15 @@
 (defun %enumerator->lazy-seq (enumerator)
   (labels ((recurse ()
              (when (move-next enumerator)
-               (lazy-seq
-                 (cons (current enumerator)
-                       (recurse))))))
+               (cons (current enumerator)
+                     (lazy-seq (recurse))))))
     (recurse)))
 
 (defun %enumerator->lazy-seq* (enumerator selector)
   (labels ((recurse ()
              (when (move-next enumerator)
-               (lazy-seq
-                 (cons (funcall selector (current enumerator))
-                       (recurse))))))
+               (cons (funcall selector (current enumerator))
+                     (lazy-seq (recurse))))))
     (recurse)))
 
 (defun %enumerable->lazy-seq (enumerable)
@@ -112,9 +109,8 @@
 (defmethod concat (first second)
   (labels ((yield-first (enumerator)
              (if (move-next enumerator)
-                 (lazy-seq
-                   (cons (current enumerator)
-                         (yield-first enumerator)))
+                 (cons (current enumerator)
+                       (lazy-seq (yield-first enumerator)))
                  (%enumerable->lazy-seq second))))
     (lazy-seq (yield-first (get-enumerator first)))))
 
@@ -466,11 +462,10 @@
                (tail (last queue)))
           (labels ((recurse ()
                      (when (move-next enumerator)
-                       (lazy-seq
-                         (setf (cdr tail) (cons (current enumerator) nil)
-                               tail (cdr tail))
-                         (cons (pop queue)
-                               (recurse))))))
+                       (setf (cdr tail) (cons (current enumerator) nil)
+                             tail (cdr tail))
+                       (cons (pop queue)
+                             (lazy-seq (recurse))))))
             (recurse))))))
 
 (defmethod skip-until (enumerable predicate)
@@ -494,9 +489,8 @@
       (labels ((recurse (i)
                  (when (and (< i count)
                             (move-next enumerator))
-                   (lazy-seq
-                     (cons (current enumerator)
-                           (recurse (1+ i)))))))
+                   (cons (current enumerator)
+                         (lazy-seq (recurse (1+ i)))))))
         (recurse 0)))))
 
 (defmethod take-every (enumerable step)
@@ -527,7 +521,7 @@
                (when (move-next enumerator)
                  (let ((elt (current enumerator)))
                    (unless (funcall predicate elt)
-                     (lazy-seq (cons elt (recurse))))))))
+                     (cons elt (lazy-seq (recurse))))))))
       (recurse))))
 
 (defmethod take-while (enumerable predicate)
@@ -536,7 +530,7 @@
                (when (move-next enumerator)
                  (let ((elt (current enumerator)))
                    (when (funcall predicate elt)
-                     (lazy-seq (cons elt (recurse))))))))
+                     (cons elt (lazy-seq (recurse))))))))
       (recurse))))
 
 (defun %then-by-impl (enumerable key-selector comparer ordering)
@@ -561,7 +555,7 @@
                (when (move-next enumerator)
                  (let ((elt (current enumerator)))
                    (if (funcall predicate elt)
-                       (lazy-seq (cons elt (recurse)))
+                       (cons elt (lazy-seq (recurse)))
                        (recurse))))))
       (recurse))))
 
@@ -570,11 +564,10 @@
     (let ((buf (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
       (labels ((recurse (prev-window)
                  (when (move-next enumerator)
-                   (lazy-seq
-                     (let ((window (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
-                       (replace window prev-window :start2 1)
-                       (setf (aref window (1- size)) (current enumerator))
-                       (cons window (recurse window)))))))
+                   (let ((window (make-array size :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))))
+                     (replace window prev-window :start2 1)
+                     (setf (aref window (1- size)) (current enumerator))
+                     (cons window (lazy-seq (recurse window)))))))
         (when (loop
                 :for i :below size
                 :always (move-next enumerator)
