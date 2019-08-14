@@ -71,6 +71,7 @@
    #:take-last
    #:take-until
    #:take-while
+   #:then-by
    #:eunion
    #:where
    #:window

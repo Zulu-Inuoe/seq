@@ -307,6 +307,10 @@
   (5am:is (equal '() (to-list (take-while (%make-e '(0 2 4 8)) #'oddp))))
   (5am:is (equal '(0 2 4 8) (to-list (take-while (%make-e '(0 2 4 8)) #'evenp)))))
 
+(5am:test generic.then-by.car-then-cdr
+  (5am:is (equal '((0 . 1) (0 . 2) (1 . 0) (2 . 0))
+                 (to-list (then-by (order-by '((1 . 0) (0 . 2) (0 . 1) (2 . 0)) #'car) #'cdr)))))
+
 (5am:test generic.eunion
   (5am:is (set-equal '(0 1 2 3)
                      (to-list (eunion (%make-e '(0 1 2 3)) (%make-e '(0 1 2 3))))))

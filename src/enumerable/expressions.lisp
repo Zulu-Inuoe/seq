@@ -235,6 +235,12 @@ If more than one element matches `predicate', an error is signalled instead."))
   (:documentation
    "Takes elements from `enumerable' while they match `predicate'."))
 
+(defgeneric then-by (enumerable key-selector &optional comparer)
+  (:documentation
+   "Performs a subsequent ordering on `enumerable'Return the `enumerable' in ascending sorted order.
+`key-selector' will be used to determine value for each element.
+`comparer' is a function receiving keys a and b,returning a negative value if a is less than b, 0 if equal, and positive if greater."))
+
 (defgeneric eunion (first second &optional test)
   (:documentation
    "Produces the set union between `first' and `second' by using `test'.
