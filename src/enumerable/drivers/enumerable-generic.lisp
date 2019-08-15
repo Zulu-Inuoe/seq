@@ -573,7 +573,7 @@
                 :always (move-next enumerator)
                 :do (setf (aref buf i) (current enumerator)))
           (cons buf
-                (recurse buf)))))))
+                (lazy-seq (recurse buf))))))))
 
 (defmethod to-hash-table (enumerable key &key (selector #'identity) (test #'eql))
   (let ((ret (make-hash-table :test test)))
