@@ -62,14 +62,14 @@
   (5am:is (any* '(0 1 nil 2) #'null)))
 
 (5am:test list.eappend
-  (5am:is (equal '(0 1 2) (to-list (eappend '(0 1) 2))))
-  (5am:is (equal '(0) (to-list (eappend '() 0)))))
+  (5am:is (eequal '(0 1 2) (eappend '(0 1) 2)))
+  (5am:is (eequal '(0) (eappend '() 0))))
 
 (5am:test list.concat
-  (5am:is (equal '(0 1 2 3) (to-list (concat '(0 1) '(2 3)))))
-  (5am:is (equal '(0 1) (to-list (concat '(0 1) '()))))
-  (5am:is (equal '(2 3) (to-list (concat '() '(2 3)))))
-  (5am:is (equal '() (to-list (concat '() '())))))
+  (5am:is (eequal '(0 1 2 3) (concat '(0 1) '(2 3))))
+  (5am:is (eequal '(0 1) (concat '(0 1) '())))
+  (5am:is (eequal '(2 3) (concat '() '(2 3))))
+  (5am:is (eequal '() (concat '() '()))))
 
 (5am:test list.consume
   ;;No observable behavior
@@ -99,12 +99,11 @@
   (5am:is (= 1 (ecount* '(0 1) #'evenp))))
 
 (5am:test list.default-if-empty
-  (5am:is (equal '(0) (to-list (default-if-empty '() 0))))
-  (5am:is (equal '(1) (to-list (default-if-empty '(1) 0)))))
+  (5am:is (eequal '(0) (default-if-empty '() 0)))
+  (5am:is (eequal '(1) (default-if-empty '(1) 0))))
 
 (5am:test list.distinct
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (distinct '(0 1 0 1 3 2)))))
+  (5am:is (eset-equal '(0 1 2 3) (distinct '(0 1 0 1 3 2))))
   (5am:is (= 4
              (length
               (to-list (distinct '(0 1 0 1 3 2)))))))
@@ -117,19 +116,19 @@
   (5am:is (eq :sentinel (element-at '() 0 :sentinel))))
 
 (5am:test list.evaluate
-  (5am:is (equal '(0 1 2)
-                 (to-list (evaluate (list (lambda () 0) (lambda () 1) (lambda () 2))))))
-  (5am:is (equal '(3 5 8)
-                 (to-list (evaluate (list (lambda () 3) (lambda () 5) (lambda () 8))))))
-  (5am:is (equal '()
-                 (to-list (evaluate '())))))
+  (5am:is (eequal '(0 1 2)
+                 (evaluate (list (lambda () 0) (lambda () 1) (lambda () 2)))))
+  (5am:is (eequal '(3 5 8)
+                 (evaluate (list (lambda () 3) (lambda () 5) (lambda () 8)))))
+  (5am:is (eequal '()
+                 (evaluate '()))))
 
 (5am:test list.except
-  (5am:is (equal '(1) (to-list (except '(1 2) '(2)))))
-  (5am:is (equal '() (to-list (except '(1 2) '(1 2)))))
-  (5am:is (equal '(1 2) (to-list (except '(1 2) '()))))
-  (5am:is (equal '() (to-list (except '() '()))))
-  (5am:is (equal '() (to-list (except '() '(1 2))))))
+  (5am:is (eequal '(1) (except '(1 2) '(2))))
+  (5am:is (eequal '() (except '(1 2) '(1 2))))
+  (5am:is (eequal '(1 2) (except '(1 2) '())))
+  (5am:is (eequal '() (except '() '())))
+  (5am:is (eequal '() (except '() '(1 2)))))
 
 (5am:test list.efirst
   (5am:is (= 1 (efirst '(1 2))))
@@ -156,28 +155,28 @@
   (5am:is (eq :sentinel (elast* '() #'evenp :sentinel))))
 
 (5am:test list.prepend
-  (5am:is (equal '(0 1 2) (to-list (prepend '(1 2) 0))))
-  (5am:is (equal '(0) (to-list (prepend '() 0)))))
+  (5am:is (eequal '(0 1 2) (prepend '(1 2) 0)))
+  (5am:is (eequal '(0) (prepend '() 0))))
 
 (5am:test list.select
-  (5am:is (equal '(1 2 3) (to-list (select '(0 1 2) #'1+))))
-  (5am:is (equal '(1) (to-list (select '(0) #'1+))))
-  (5am:is (equal '() (to-list (select '() #'1+)))))
+  (5am:is (eequal '(1 2 3) (select '(0 1 2) #'1+)))
+  (5am:is (eequal '(1) (select '(0) #'1+)))
+  (5am:is (eequal '() (select '() #'1+))))
 
 (5am:test list.select*
-  (5am:is (equal '((0 . 0) (1 . 1) (2 . 2)) (to-list (select* '(0 1 2) #'cons))))
-  (5am:is (equal '((a . 0) (b . 1) (c . 2)) (to-list (select* '(a b c) #'cons))))
-  (5am:is (equal '() (to-list (select* '() #'cons)))))
+  (5am:is (eequal '((0 . 0) (1 . 1) (2 . 2)) (select* '(0 1 2) #'cons)))
+  (5am:is (eequal '((a . 0) (b . 1) (c . 2)) (select* '(a b c) #'cons)))
+  (5am:is (eequal '() (select* '() #'cons))))
 
 (5am:test list.select-many
-  (5am:is (equal '(1 2 2) (to-list (select-many '(0 1 2) (lambda (v) (repeat v v))))))
-  (5am:is (equal '(2 3 3) (to-list (select-many '(0 1 2) (lambda (v) (repeat v v)) #'1+))))
-  (5am:is (equal '() (to-list (select-many '() (lambda (v) (repeat v v)))))))
+  (5am:is (eequal '(1 2 2) (select-many '(0 1 2) (lambda (v) (repeat v v)))))
+  (5am:is (eequal '(2 3 3) (select-many '(0 1 2) (lambda (v) (repeat v v)) #'1+)))
+  (5am:is (eequal '() (select-many '() (lambda (v) (repeat v v))))))
 
 (5am:test list.select-many*
-  (5am:is (equal '(1 2 2 2 2 2) (to-list (select-many* '(0 1 2 2) #'repeat))))
-  (5am:is (equal '(2 3 3 3 3 3) (to-list (select-many* '(0 1 2 2) #'repeat #'1+))))
-  (5am:is (equal '() (to-list (select-many* '() #'repeat)))))
+  (5am:is (eequal '(1 2 2 2 2 2) (select-many* '(0 1 2 2) #'repeat)))
+  (5am:is (eequal '(2 3 3 3 3 3) (select-many* '(0 1 2 2) #'repeat #'1+)))
+  (5am:is (eequal '() (select-many* '() #'repeat))))
 
 (5am:test list.single
   (5am:is (equal 0 (single '(0))))
@@ -202,66 +201,66 @@
     (single* '(0 1 2) #'evenp :sentinel)))
 
 (5am:test list.skip
-  (5am:is (equal '(0 1 2 3) (to-list (skip '(0 1 2 3) 0))))
-  (5am:is (equal '(2 3) (to-list (skip '(0 1 2 3) 2))))
-  (5am:is (equal '() (to-list (skip '(0 1 2 3) 4))))
-  (5am:is (equal '() (to-list (skip '(0 1 2 3) 2121)))))
+  (5am:is (eequal '(0 1 2 3) (skip '(0 1 2 3) 0)))
+  (5am:is (eequal '(2 3) (skip '(0 1 2 3) 2)))
+  (5am:is (eequal '() (skip '(0 1 2 3) 4)))
+  (5am:is (eequal '() (skip '(0 1 2 3) 2121))))
 
 (5am:test list.skip-last
-  (5am:is (equal '(0 1 2 3) (to-list (skip-last '(0 1 2 3) 0))))
-  (5am:is (equal '(0 1 2) (to-list (skip-last '(0 1 2 3) 1))))
-  (5am:is (equal '(0 1) (to-list (skip-last '(0 1 2 3) 2))))
-  (5am:is (equal '() (to-list (skip-last '(0 1 2 3) 4))))
-  (5am:is (equal '() (to-list (skip-last '(0 1 2 3) 2121)))))
+  (5am:is (eequal '(0 1 2 3) (skip-last '(0 1 2 3) 0)))
+  (5am:is (eequal '(0 1 2) (skip-last '(0 1 2 3) 1)))
+  (5am:is (eequal '(0 1) (skip-last '(0 1 2 3) 2)))
+  (5am:is (eequal '() (skip-last '(0 1 2 3) 4)))
+  (5am:is (eequal '() (skip-last '(0 1 2 3) 2121))))
 
 (5am:test list.skip-until
-  (5am:is (equal '(0 1 2 3) (to-list (skip-until '(0 1 2 3) #'evenp))))
-  (5am:is (equal '(1 2 3) (to-list (skip-until '(0 1 2 3) #'oddp))))
-  (5am:is (equal '() (to-list (skip-until '(0 2 4 8) #'oddp)))))
+  (5am:is (eequal '(0 1 2 3) (skip-until '(0 1 2 3) #'evenp)))
+  (5am:is (eequal '(1 2 3) (skip-until '(0 1 2 3) #'oddp)))
+  (5am:is (eequal '() (skip-until '(0 2 4 8) #'oddp))))
 
 (5am:test list.skip-while
-  (5am:is (equal '(1 2 3) (to-list (skip-while '(0 1 2 3) #'evenp))))
-  (5am:is (equal '(0 1 2 3) (to-list (skip-while '(0 1 2 3) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (skip-while '(0 2 4 8) #'oddp)))))
+  (5am:is (eequal '(1 2 3) (skip-while '(0 1 2 3) #'evenp)))
+  (5am:is (eequal '(0 1 2 3) (skip-while '(0 1 2 3) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (skip-while '(0 2 4 8) #'oddp))))
 
 (5am:test list.take
-  (5am:is (equal '() (to-list (take '(0 1 2 3) 0))))
-  (5am:is (equal '(0 1) (to-list (take '(0 1 2 3) 2))))
-  (5am:is (equal '(0 1 2 3) (to-list (take '(0 1 2 3) 4))))
-  (5am:is (equal '(0 1 2 3) (to-list (take '(0 1 2 3) 41201)))))
+  (5am:is (eequal '() (take '(0 1 2 3) 0)))
+  (5am:is (eequal '(0 1) (take '(0 1 2 3) 2)))
+  (5am:is (eequal '(0 1 2 3) (take '(0 1 2 3) 4)))
+  (5am:is (equal '(0 1 2 3) (take '(0 1 2 3) 41201))))
 
 (5am:test list.take-every
   (5am:signals error
     (to-list (take-every '(0 1 2 3) 0)))
-  (5am:is (equal '(0 1 2 3) (to-list (take-every '(0 1 2 3) 1))))
-  (5am:is (equal '(0 2) (to-list (take-every '(0 1 2 3) 2))))
-  (5am:is (equal '(0 3) (to-list (take-every '(0 1 2 3) 3))))
-  (5am:is (equal '(0) (to-list (take-every '(0 1 2 3) 41201)))))
+  (5am:is (eequal '(0 1 2 3) (take-every '(0 1 2 3) 1)))
+  (5am:is (eequal '(0 2) (take-every '(0 1 2 3) 2)))
+  (5am:is (eequal '(0 3) (take-every '(0 1 2 3) 3)))
+  (5am:is (eequal '(0) (take-every '(0 1 2 3) 41201))))
 
 (5am:test list.take-last
   (5am:signals error
     (to-list (take-last '(0 1 2 3) -12)))
-  (5am:is (equal '() (to-list (take-last '(0 1 2 3) 0))))
-  (5am:is (equal '(2 3) (to-list (take-last '(0 1 2 3) 2))))
-  (5am:is (equal '(0 1 2 3) (to-list (take-last '(0 1 2 3) 4))))
-  (5am:is (equal '(0 1 2 3) (to-list (take-last '(0 1 2 3) 1212)))))
+  (5am:is (eequal '() (take-last '(0 1 2 3) 0)))
+  (5am:is (eequal '(2 3) (take-last '(0 1 2 3) 2)))
+  (5am:is (eequal '(0 1 2 3) (take-last '(0 1 2 3) 4)))
+  (5am:is (eequal '(0 1 2 3) (take-last '(0 1 2 3) 1212))))
 
 (5am:test list.take-until
-  (5am:is (equal '() (to-list (take-until '(0 1 2 3) #'evenp))))
-  (5am:is (equal '(0) (to-list (take-until '(0 1 2 3) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (take-until '(0 2 4 8) #'oddp)))))
+  (5am:is (eequal '() (take-until '(0 1 2 3) #'evenp)))
+  (5am:is (eequal '(0) (take-until '(0 1 2 3) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (take-until '(0 2 4 8) #'oddp))))
 
 (5am:test list.take-while
-  (5am:is (equal '(0) (to-list (take-while '(0 1 2 3) #'evenp))))
-  (5am:is (equal '() (to-list (take-while '(0 1 2 3) #'oddp))))
-  (5am:is (equal '() (to-list (take-while '(0 2 4 8) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (take-while '(0 2 4 8) #'evenp)))))
+  (5am:is (eequal '(0) (take-while '(0 1 2 3) #'evenp)))
+  (5am:is (eequal '() (take-while '(0 1 2 3) #'oddp)))
+  (5am:is (eequal '() (take-while '(0 2 4 8) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (take-while '(0 2 4 8) #'evenp))))
 
 (5am:test list.where
-  (5am:is (equal '(0 2) (to-list (where '(0 1 2 3) #'evenp))))
-  (5am:is (equal '(1 3) (to-list (where '(0 1 2 3) #'oddp))))
-  (5am:is (equal '() (to-list (where '(0 2 4 8) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (where '(0 2 4 8) #'evenp)))))
+  (5am:is (eequal '(0 2) (where '(0 1 2 3) #'evenp)))
+  (5am:is (eequal '(1 3) (where '(0 1 2 3) #'oddp)))
+  (5am:is (eequal '() (where '(0 2 4 8) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (where '(0 2 4 8) #'evenp))))
 
 (5am:test list.to-list
   (5am:is (equal '(1 2 3) (to-list '(1 2 3))))

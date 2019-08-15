@@ -9,6 +9,18 @@
 
 (5am:in-suite expressions)
 
+(defun eequal (e1 e2)
+  "As `equal', but forces arguments by `to-list'"
+  (equal (to-list e1) (to-list e2)))
+
+(defun eequalp (e1 e2)
+  "As `equalp', but forces arguments by `to-list'"
+  (equalp (to-list e1) (to-list e2)))
+
+(defun eset-equal (e1 e2 &key (test #'eql) (key #'identity))
+  "As `set-equal', but forces arguments by `to-list'"
+  (set-equal (to-list e1) (to-list e2) :test test :key key))
+
 (defun run-tests ()
   (5am:run! 'enumerable))
 

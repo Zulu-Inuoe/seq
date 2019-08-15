@@ -1,6 +1,10 @@
 (defpackage #:enumerable-tests
   (:use #:alexandria #:cl #:enumerable)
   (:export
+   #:eequal
+   #:eequalp
+   #:eset-equal
+
    ;;; Programmatic run-tests
    #:run-tests
 

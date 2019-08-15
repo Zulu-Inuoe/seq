@@ -54,20 +54,20 @@
   (5am:is-true (any* (%make-e '(0 1 nil 2)) #'null)))
 
 (5am:test generic.eappend
-  (5am:is (equal '(0 1 2) (to-list (eappend (%make-e '(0 1)) 2))))
-  (5am:is (equal '(0) (to-list (eappend (%make-e '()) 0)))))
+  (5am:is (eequal '(0 1 2) (eappend (%make-e '(0 1)) 2)))
+  (5am:is (eequal '(0) (eappend (%make-e '()) 0))))
 
 (5am:test generic.batch
-  (5am:is (equalp '(#(0) #(1) #(2) #(3)) (to-list (batch (%make-e '(0 1 2 3)) 1))))
-  (5am:is (equalp '(#(0 1) #(2 3)) (to-list (batch (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equalp '(#(0 1 2) #(3)) (to-list (batch (%make-e '(0 1 2 3)) 3))))
-  (5am:is (equalp '(#(0 1 2 3)) (to-list (batch (%make-e '(0 1 2 3)) 4)))))
+  (5am:is (eequalp '(#(0) #(1) #(2) #(3)) (batch (%make-e '(0 1 2 3)) 1)))
+  (5am:is (eequalp '(#(0 1) #(2 3)) (batch (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequalp '(#(0 1 2) #(3)) (batch (%make-e '(0 1 2 3)) 3)))
+  (5am:is (eequalp '(#(0 1 2 3)) (batch (%make-e '(0 1 2 3)) 4))))
 
 (5am:test generic.concat
-  (5am:is (equal '(0 1 2 3) (to-list (concat (%make-e '(0 1)) (%make-e '(2 3))))))
-  (5am:is (equal '(0 1) (to-list (concat (%make-e '(0 1)) (%make-e '())))))
-  (5am:is (equal '(2 3) (to-list (concat (%make-e '()) (%make-e '(2 3))))))
-  (5am:is (equal '() (to-list (concat (%make-e '()) (%make-e '()))))))
+  (5am:is (eequal '(0 1 2 3) (concat (%make-e '(0 1)) (%make-e '(2 3)))))
+  (5am:is (eequal '(0 1) (concat (%make-e '(0 1)) (%make-e '()))))
+  (5am:is (eequal '(2 3) (concat (%make-e '()) (%make-e '(2 3)))))
+  (5am:is (eequal '() (concat (%make-e '()) (%make-e '())))))
 
 (5am:test generic.consume
   ;; Need proper test for side-effects
@@ -97,12 +97,12 @@
   (5am:is (= 1 (ecount* (%make-e '(0 1)) #'evenp))))
 
 (5am:test generic.default-if-empty
-  (5am:is (equal '(0) (to-list (default-if-empty (%make-e '()) 0))))
-  (5am:is (equal '(1) (to-list (default-if-empty (%make-e '(1)) 0)))))
+  (5am:is (eequal '(0) (default-if-empty (%make-e '()) 0)))
+  (5am:is (eequal '(1) (default-if-empty (%make-e '(1)) 0))))
 
 (5am:test generic.distinct
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (distinct (%make-e '(0 1 0 1 3 2))))))
+  (5am:is (eset-equal '(0 1 2 3)
+                      (distinct (%make-e '(0 1 0 1 3 2)))))
   (5am:is (= 4
              (length
               (to-list (distinct (%make-e '(0 1 0 1 3 2))))))))
@@ -115,19 +115,19 @@
   (5am:is (eq :sentinel (element-at (%make-e '()) 0 :sentinel))))
 
 (5am:test generic.evaluate
-  (5am:is (equal '(0 1 2)
-                 (to-list (evaluate (%make-e (list (lambda () 0) (lambda () 1) (lambda () 2)))))))
-  (5am:is (equal '(3 5 8)
-                 (to-list (evaluate (%make-e (list (lambda () 3) (lambda () 5) (lambda () 8)))))))
-  (5am:is (equal '()
-                 (to-list (evaluate (%make-e '()))))))
+  (5am:is (eequal '(0 1 2)
+                  (evaluate (%make-e (list (lambda () 0) (lambda () 1) (lambda () 2))))))
+  (5am:is (eequal '(3 5 8)
+                  (evaluate (%make-e (list (lambda () 3) (lambda () 5) (lambda () 8))))))
+  (5am:is (eequal '()
+                  (evaluate (%make-e '())))))
 
 (5am:test generic.except
-  (5am:is (equal '(1) (to-list (except (%make-e '(1 2)) (%make-e '(2))))))
-  (5am:is (equal '() (to-list (except (%make-e '(1 2)) (%make-e '(1 2))))))
-  (5am:is (equal '(1 2) (to-list (except (%make-e '(1 2)) (%make-e '())))))
-  (5am:is (equal '() (to-list (except (%make-e '()) (%make-e '())))))
-  (5am:is (equal '() (to-list (except (%make-e '()) (%make-e '(1 2)))))))
+  (5am:is (eequal '(1) (except (%make-e '(1 2)) (%make-e '(2)))))
+  (5am:is (eequal '() (except (%make-e '(1 2)) (%make-e '(1 2)))))
+  (5am:is (eequal '(1 2) (except (%make-e '(1 2)) (%make-e '()))))
+  (5am:is (eequal '() (except (%make-e '()) (%make-e '()))))
+  (5am:is (eequal '() (except (%make-e '()) (%make-e '(1 2))))))
 
 (5am:test generic.efirst
   (5am:is (= 1 (efirst (%make-e '(1 2)))))
@@ -141,32 +141,30 @@
   (5am:is (eq :sentinel (efirst* (%make-e '(0 2 10 6)) #'oddp :sentinel))))
 
 (5am:test group-adjacent
-  (5am:is (set-equal '((1 2)) (to-list
-                               (select (group-adjacent '((0 . 1) (0 . 2)) #'car :selector #'cdr)
-                                 #'to-list))
-                     :test #'set-equal)))
+  (5am:is (eset-equal '((1 2) (0)) (group-adjacent '((0 . 1) (0 . 2) (1 . 0)) #'car :selector #'cdr)
+                      :test #'set-equal
+                      :key #'to-list)))
 
 (5am:test generic.group-by
   (5am:is
-   (set-equal
+   (eset-equal
     '(("A" 2 1) ("C" 3) ("D" 4))
-    (to-list
-     (group-by
-      '(("A" 2) ("A" 1) ("C" 3) ("D" 4)) #'car
-      :test #'string=
-      :result-selector (lambda (k e) (cons k (to-list e)))
-      :selector #'cadr))
+    (group-by
+     '(("A" 2) ("A" 1) ("C" 3) ("D" 4)) #'car
+     :test #'string=
+     :result-selector (lambda (k e) (cons k (to-list e)))
+     :selector #'cadr)
     :test (lambda (a b)
             (and (string= (car a) (car b))
                  (set-equal (cdr a) (cdr b)))))))
 
 (5am:test generic.intersect
-  (5am:is (set-equal '(1) (to-list (intersect (%make-e '(1 2 3)) (%make-e '(1))))))
-  (5am:is (set-equal '(1 2 3) (to-list (intersect (%make-e '(1 2 3)) (%make-e '(1 2 3))))))
-  (5am:is (set-equal '(3) (to-list (intersect (%make-e '(1 2 3)) (%make-e '(3))))))
-  (5am:is (set-equal '() (to-list (intersect (%make-e '(1 2 3)) (%make-e '())))))
-  (5am:is (set-equal '(1 2 3) (to-list (intersect (%make-e '(1 2 3)) (%make-e '(3 2 1))))))
-  (5am:is (set-equal '() (to-list (intersect (%make-e '()) (%make-e '(1 2 3)))))))
+  (5am:is (eset-equal '(1) (intersect (%make-e '(1 2 3)) (%make-e '(1)))))
+  (5am:is (eset-equal '(1 2 3) (intersect (%make-e '(1 2 3)) (%make-e '(1 2 3)))))
+  (5am:is (eset-equal '(3) (intersect (%make-e '(1 2 3)) (%make-e '(3)))))
+  (5am:is (eset-equal '() (intersect (%make-e '(1 2 3)) (%make-e '()))))
+  (5am:is (eset-equal '(1 2 3) (intersect (%make-e '(1 2 3)) (%make-e '(3 2 1)))))
+  (5am:is (eset-equal '() (intersect (%make-e '()) (%make-e '(1 2 3))))))
 
 (5am:test generic.elast
   (5am:is (= 3 (elast (%make-e '(1 2 3)))))
@@ -182,51 +180,51 @@
   (5am:is (eq :sentinel (elast* (%make-e '()) #'evenp :sentinel))))
 
 (5am:test generic.order-by.sort-empty
-  (5am:is (equal () (to-list (order-by () #'identity)))))
+  (5am:is (eequal () (order-by () #'identity))))
 
 (5am:test generic.order-by.sort-numbers-identity
-  (5am:is (equal '(1 2 3) (to-list (order-by '(3 2 1) #'identity)))))
+  (5am:is (eequal '(1 2 3) (order-by '(3 2 1) #'identity))))
 
 (5am:test generic.order-by.sort-characters-code
-  (5am:is (equal '#.(list (code-char 1) (code-char 2) (code-char 3)) (to-list (order-by '#.(list (code-char 2) (code-char 3) (code-char 1)) #'char-code)))))
+  (5am:is (eequal (list (code-char 1) (code-char 2) (code-char 3)) (order-by (list (code-char 2) (code-char 3) (code-char 1)) #'char-code))))
 
 (5am:test generic.order-by.sort-strings-length-minus
-  (5am:is (equal '("short" "medium" "longlong") (to-list (order-by '("longlong" "short" "medium") #'identity (lambda (a b) (- (length a) (length b))))))))
+  (5am:is (eequal '("short" "medium" "longlong") (order-by '("longlong" "short" "medium") #'identity (lambda (a b) (- (length a) (length b)))))))
 
 (5am:test generic.prepend
-  (5am:is (equal '(0 1 2) (to-list (prepend (%make-e '(1 2)) 0))))
-  (5am:is (equal '(0) (to-list (prepend (%make-e '()) 0)))))
+  (5am:is (eequal '(0 1 2) (prepend (%make-e '(1 2)) 0)))
+  (5am:is (eequal '(0) (prepend (%make-e '()) 0))))
 
 (5am:test generic.ereverse
-  (5am:is (equal '(4 3 2 1) (to-list (ereverse (%make-e '(1 2 3 4))))))
-  (5am:is (equal '(1) (to-list (ereverse (%make-e '(1)))))))
+  (5am:is (eequal '(4 3 2 1) (ereverse (%make-e '(1 2 3 4)))))
+  (5am:is (eequal '(1) (ereverse (%make-e '(1))))))
 
 (5am:test generic.run-length-encode.basic-encoding
-  (5am:is (equal '((nil . 10)) (to-list (run-length-encode (make-list 10)))))
-  (5am:is (equal '((0 . 1) (1 . 1) (2 . 1)) (to-list (run-length-encode '(0 1 2))))))
+  (5am:is (eequal '((nil . 10)) (run-length-encode (make-list 10))))
+  (5am:is (eequal '((0 . 1) (1 . 1) (2 . 1)) (run-length-encode '(0 1 2)))))
 
 (5am:test generic.run-length-encode.limit-elements
-  (5am:is (equal '((nil . 5) (nil . 5)) (to-list (run-length-encode (make-list 10) :limit 5)))))
+  (5am:is (eequal '((nil . 5) (nil . 5)) (run-length-encode (make-list 10) :limit 5))))
 
 (5am:test generic.select
-  (5am:is (equal '(1 2 3) (to-list (select (%make-e '(0 1 2)) #'1+))))
-  (5am:is (equal '(1) (to-list (select (%make-e '(0)) #'1+))))
-  (5am:is (equal '() (to-list (select (%make-e '()) #'1+)))))
+  (5am:is (eequal '(1 2 3) (select (%make-e '(0 1 2)) #'1+)))
+  (5am:is (eequal '(1) (select (%make-e '(0)) #'1+)))
+  (5am:is (eequal '() (select (%make-e '()) #'1+))))
 
 (5am:test generic.select*
-  (5am:is (equal '((0 . 0) (1 . 1) (2 . 2)) (to-list (select* (%make-e '(0 1 2)) #'cons))))
-  (5am:is (equal '((a . 0) (b . 1) (c . 2)) (to-list (select* (%make-e '(a b c)) #'cons))))
-  (5am:is (equal '() (to-list (select* (%make-e '()) #'cons)))))
+  (5am:is (eequal '((0 . 0) (1 . 1) (2 . 2)) (select* (%make-e '(0 1 2)) #'cons)))
+  (5am:is (eequal '((a . 0) (b . 1) (c . 2)) (select* (%make-e '(a b c)) #'cons)))
+  (5am:is (eequal '() (select* (%make-e '()) #'cons))))
 
 (5am:test generic.select-many
-  (5am:is (equal '(1 2 2) (to-list (select-many (%make-e '(0 1 2)) (lambda (v) (repeat v v))))))
-  (5am:is (equal '(2 3 3) (to-list (select-many (%make-e '(0 1 2)) (lambda (v) (repeat v v)) #'1+))))
-  (5am:is (equal '() (to-list (select-many (%make-e '()) (lambda (v) (repeat v v)))))))
+  (5am:is (eequal '(1 2 2) (select-many (%make-e '(0 1 2)) (lambda (v) (repeat v v)))))
+  (5am:is (eequal '(2 3 3) (select-many (%make-e '(0 1 2)) (lambda (v) (repeat v v)) #'1+)))
+  (5am:is (eequal '() (select-many (%make-e '()) (lambda (v) (repeat v v))))))
 
 (5am:test generic.select-many*
-  (5am:is (equal '(1 2 2 2 2 2) (to-list (select-many* (%make-e '(0 1 2 2)) #'repeat))))
-  (5am:is (equal '(2 3 3 3 3 3) (to-list (select-many* (%make-e '(0 1 2 2)) #'repeat #'1+))))
-  (5am:is (equal '() (to-list (select-many* (%make-e '()) #'repeat)))))
+  (5am:is (eequal '(1 2 2 2 2 2) (select-many* (%make-e '(0 1 2 2)) #'repeat)))
+  (5am:is (eequal '(2 3 3 3 3 3) (select-many* (%make-e '(0 1 2 2)) #'repeat #'1+)))
+  (5am:is (eequal '() (select-many* (%make-e '()) #'repeat))))
 
 (5am:test generic.single
   (5am:is (equal 0 (single (%make-e '(0)))))
@@ -251,113 +249,113 @@
     (single* (%make-e '(0 1 2)) #'evenp :sentinel)))
 
 (5am:test generic.skip
-  (5am:is (equal '(0 1 2 3) (to-list (skip (%make-e '(0 1 2 3)) 0))))
-  (5am:is (equal '(2 3) (to-list (skip (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equal '() (to-list (skip (%make-e '(0 1 2 3)) 4))))
-  (5am:is (equal '() (to-list (skip (%make-e '(0 1 2 3)) 2121))))
-  (5am:is (equal '(0 1 2 3) (to-list (skip (%make-e '(0 1 2 3)) -1)))))
+  (5am:is (eequal '(0 1 2 3) (skip (%make-e '(0 1 2 3)) 0)))
+  (5am:is (eequal '(2 3) (skip (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequal '() (skip (%make-e '(0 1 2 3)) 4)))
+  (5am:is (eequal '() (skip (%make-e '(0 1 2 3)) 2121)))
+  (5am:is (eequal '(0 1 2 3) (skip (%make-e '(0 1 2 3)) -1))))
 
 (5am:test generic.skip-last
-  (5am:is (equal '(0 1 2 3) (to-list (skip-last (%make-e '(0 1 2 3)) 0))))
-  (5am:is (equal '(0 1 2) (to-list (skip-last (%make-e '(0 1 2 3)) 1))))
-  (5am:is (equal '(0 1) (to-list (skip-last (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equal '() (to-list (skip-last (%make-e '(0 1 2 3)) 4))))
-  (5am:is (equal '() (to-list (skip-last (%make-e '(0 1 2 3)) 2121)))))
+  (5am:is (eequal '(0 1 2 3) (skip-last (%make-e '(0 1 2 3)) 0)))
+  (5am:is (eequal '(0 1 2) (skip-last (%make-e '(0 1 2 3)) 1)))
+  (5am:is (eequal '(0 1) (skip-last (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequal '() (skip-last (%make-e '(0 1 2 3)) 4)))
+  (5am:is (eequal '() (skip-last (%make-e '(0 1 2 3)) 2121))))
 
 (5am:test generic.skip-until
-  (5am:is (equal '(0 1 2 3) (to-list (skip-until (%make-e '(0 1 2 3)) #'evenp))))
-  (5am:is (equal '(1 2 3) (to-list (skip-until (%make-e '(0 1 2 3)) #'oddp))))
-  (5am:is (equal '() (to-list (skip-until (%make-e '(0 2 4 8)) #'oddp)))))
+  (5am:is (eequal '(0 1 2 3) (skip-until (%make-e '(0 1 2 3)) #'evenp)))
+  (5am:is (eequal '(1 2 3) (skip-until (%make-e '(0 1 2 3)) #'oddp)))
+  (5am:is (eequal '() (skip-until (%make-e '(0 2 4 8)) #'oddp))))
 
 (5am:test generic.skip-while
-  (5am:is (equal '(1 2 3) (to-list (skip-while (%make-e '(0 1 2 3)) #'evenp))))
-  (5am:is (equal '(0 1 2 3) (to-list (skip-while (%make-e '(0 1 2 3)) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (skip-while (%make-e '(0 2 4 8)) #'oddp)))))
+  (5am:is (eequal '(1 2 3) (skip-while (%make-e '(0 1 2 3)) #'evenp)))
+  (5am:is (eequal '(0 1 2 3) (skip-while (%make-e '(0 1 2 3)) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (skip-while (%make-e '(0 2 4 8)) #'oddp))))
 
 (5am:test generic.take
-  (5am:is (equal '() (to-list (take (%make-e '(0 1 2 3)) 0))))
-  (5am:is (equal '(0 1) (to-list (take (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equal '(0 1 2 3) (to-list (take (%make-e '(0 1 2 3)) 4))))
-  (5am:is (equal '(0 1 2 3) (to-list (take (%make-e '(0 1 2 3)) 41201)))))
+  (5am:is (eequal '() (take (%make-e '(0 1 2 3)) 0)))
+  (5am:is (eequal '(0 1) (take (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequal '(0 1 2 3) (take (%make-e '(0 1 2 3)) 4)))
+  (5am:is (eequal '(0 1 2 3) (take (%make-e '(0 1 2 3)) 41201))))
 
 (5am:test generic.take-every
   (5am:signals error
     (to-list (take-every (%make-e '(0 1 2 3)) 0)))
-  (5am:is (equal '(0 1 2 3) (to-list (take-every (%make-e '(0 1 2 3)) 1))))
-  (5am:is (equal '(0 2) (to-list (take-every (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equal '(0 3) (to-list (take-every (%make-e '(0 1 2 3)) 3))))
-  (5am:is (equal '(0) (to-list (take-every (%make-e '(0 1 2 3)) 41201)))))
+  (5am:is (eequal '(0 1 2 3) (take-every (%make-e '(0 1 2 3)) 1)))
+  (5am:is (eequal '(0 2) (take-every (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequal '(0 3) (take-every (%make-e '(0 1 2 3)) 3)))
+  (5am:is (eequal '(0) (take-every (%make-e '(0 1 2 3)) 41201))))
 
 (5am:test generic.take-last
   (5am:signals error
     (to-list (take-last (%make-e '(0 1 2 3)) -12)))
-  (5am:is (equal '() (to-list (take-last (%make-e '(0 1 2 3)) 0))))
-  (5am:is (equal '(2 3) (to-list (take-last (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equal '(0 1 2 3) (to-list (take-last (%make-e '(0 1 2 3)) 4))))
-  (5am:is (equal '(0 1 2 3) (to-list (take-last (%make-e '(0 1 2 3)) 1212)))))
+  (5am:is (eequal '() (take-last (%make-e '(0 1 2 3)) 0)))
+  (5am:is (eequal '(2 3) (take-last (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequal '(0 1 2 3) (take-last (%make-e '(0 1 2 3)) 4)))
+  (5am:is (eequal '(0 1 2 3) (take-last (%make-e '(0 1 2 3)) 1212))))
 
 (5am:test generic.take-until
-  (5am:is (equal '() (to-list (take-until (%make-e '(0 1 2 3)) #'evenp))))
-  (5am:is (equal '(0) (to-list (take-until (%make-e '(0 1 2 3)) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (take-until (%make-e '(0 2 4 8)) #'oddp)))))
+  (5am:is (eequal '() (take-until (%make-e '(0 1 2 3)) #'evenp)))
+  (5am:is (eequal '(0) (take-until (%make-e '(0 1 2 3)) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (take-until (%make-e '(0 2 4 8)) #'oddp))))
 
 (5am:test generic.take-while
-  (5am:is (equal '(0) (to-list (take-while (%make-e '(0 1 2 3)) #'evenp))))
-  (5am:is (equal '() (to-list (take-while (%make-e '(0 1 2 3)) #'oddp))))
-  (5am:is (equal '() (to-list (take-while (%make-e '(0 2 4 8)) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (take-while (%make-e '(0 2 4 8)) #'evenp)))))
+  (5am:is (eequal '(0) (take-while (%make-e '(0 1 2 3)) #'evenp)))
+  (5am:is (eequal '() (take-while (%make-e '(0 1 2 3)) #'oddp)))
+  (5am:is (eequal '() (take-while (%make-e '(0 2 4 8)) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (take-while (%make-e '(0 2 4 8)) #'evenp))))
 
 (5am:test generic.then-by.car-then-cdr
   (5am:is (equal '((0 . 1) (0 . 2) (1 . 0) (2 . 0))
                  (to-list (then-by (order-by '((1 . 0) (0 . 2) (0 . 1) (2 . 0)) #'car) #'cdr)))))
 
 (5am:test generic.eunion
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (eunion (%make-e '(0 1 2 3)) (%make-e '(0 1 2 3))))))
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (eunion (%make-e '()) (%make-e '(0 1 2 2 3))))))
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (eunion (%make-e '(0 1 1 2 3)) (%make-e '())))))
-  (5am:is (set-equal '(0 1 2 3)
-                     (to-list (eunion (%make-e '(0 1 1)) (%make-e '(3 2 3))))))
+  (5am:is (eset-equal '(0 1 2 3)
+                      (eunion (%make-e '(0 1 2 3)) (%make-e '(0 1 2 3)))))
+  (5am:is (eset-equal '(0 1 2 3)
+                      (eunion (%make-e '()) (%make-e '(0 1 2 2 3)))))
+  (5am:is (eset-equal '(0 1 2 3)
+                      (eunion (%make-e '(0 1 1 2 3)) (%make-e '()))))
+  (5am:is (eset-equal '(0 1 2 3)
+                      (eunion (%make-e '(0 1 1)) (%make-e '(3 2 3)))))
   (5am:is (= 1
              (length (to-list (eunion (%make-e '("foo" "FOO")) (%make-e '("foo" "FOO")) #'string-equal))))))
 
 (5am:test generic.where
-  (5am:is (equal '(0 2) (to-list (where (%make-e '(0 1 2 3)) #'evenp))))
-  (5am:is (equal '(1 3) (to-list (where (%make-e '(0 1 2 3)) #'oddp))))
-  (5am:is (equal '() (to-list (where (%make-e '(0 2 4 8)) #'oddp))))
-  (5am:is (equal '(0 2 4 8) (to-list (where (%make-e '(0 2 4 8)) #'evenp)))))
+  (5am:is (eequal '(0 2) (where (%make-e '(0 1 2 3)) #'evenp)))
+  (5am:is (eequal '(1 3) (where (%make-e '(0 1 2 3)) #'oddp)))
+  (5am:is (eequal '() (where (%make-e '(0 2 4 8)) #'oddp)))
+  (5am:is (eequal '(0 2 4 8) (where (%make-e '(0 2 4 8)) #'evenp))))
 
 (5am:test generic.window
-  (5am:is (equalp '(#(0) #(1) #(2) #(3)) (to-list (window (%make-e '(0 1 2 3)) 1))))
-  (5am:is (equalp '(#(0 1) #(1 2) #(2 3)) (to-list (window (%make-e '(0 1 2 3)) 2))))
-  (5am:is (equalp '(#(0 1 2) #(1 2 3)) (to-list (window (%make-e '(0 1 2 3)) 3))))
-  (5am:is (equalp '(#(0 1 2 3)) (to-list (window (%make-e '(0 1 2 3)) 4))))
-  (5am:is (equalp '() (to-list (window (%make-e '(0 1 2 3)) 5)))))
+  (5am:is (eequalp '(#(0) #(1) #(2) #(3)) (window (%make-e '(0 1 2 3)) 1)))
+  (5am:is (eequalp '(#(0 1) #(1 2) #(2 3)) (window (%make-e '(0 1 2 3)) 2)))
+  (5am:is (eequalp '(#(0 1 2) #(1 2 3)) (window (%make-e '(0 1 2 3)) 3)))
+  (5am:is (eequalp '(#(0 1 2 3)) (window (%make-e '(0 1 2 3)) 4)))
+  (5am:is (eequalp '() (window (%make-e '(0 1 2 3)) 5))))
 
 (5am:test generic.to-hash-table
-  (5am:is (set-equal
+  (5am:is (eset-equal
            '((1 . 1) (2 . 2) (3 . 3))
-           (to-list (to-hash-table '(1 2 3) #'identity))
+           (to-hash-table '(1 2 3) #'identity)
            :test #'equal))
-  (5am:is (set-equal
+  (5am:is (eset-equal
            '()
-           (to-list (to-hash-table '() #'identity))
+           (to-hash-table '() #'identity)
            :test #'equal))
-  (5am:is (set-equal
+  (5am:is (eset-equal
            '((2 . 1) (3 . 2))
-           (to-list (to-hash-table '(1 2) #'1+))
+           (to-hash-table '(1 2) #'1+)
            :test #'equal))
-  (5am:is (set-equal
+  (5am:is (eset-equal
            '((1 . 2) (2 . 3))
-           (to-list (to-hash-table '(1 2) #'identity :selector #'1+))
+           (to-hash-table '(1 2) #'identity :selector #'1+)
            :test #'equal)))
 
 (5am:test generic.to-list
-  (5am:is (equal '(1 2 3) (to-list (%make-e '(1 2 3)))))
-  (5am:is (equal '() (to-list (%make-e '()))))
-  (5am:is (equal '(0) (to-list (%make-e '(0))))))
+  (5am:is (eequal '(1 2 3) (%make-e '(1 2 3))))
+  (5am:is (eequal '() (%make-e '())))
+  (5am:is (eequal '(0) (%make-e '(0)))))
 
 (5am:test generic.to-vector
   (5am:is (equalp #(1 2 3) (to-vector (%make-e '(1 2 3)))))
