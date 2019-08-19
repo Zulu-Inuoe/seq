@@ -51,6 +51,7 @@
    #:elast
    #:elast*
    #:order-by
+   #:order-by-descending
    #:prepend
    #:range
    #:repeat
@@ -72,6 +73,7 @@
    #:take-until
    #:take-while
    #:then-by
+   #:then-by-descending
    #:eunion
    #:where
    #:window
