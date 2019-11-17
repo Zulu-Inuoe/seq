@@ -11,57 +11,6 @@
          (map-enumerable (lambda (,var) ,@decl (tagbody ,@body)) ,enumerable)
          ,(when result `(let (,var) ,var ,result)))))
 
-  (defun %loop-expander (type var enumerable result body env)
-    (declare (ignore type env))
-    (with-gensyms (enumerator-sym)
-      (multiple-value-bind (body decls)
-          (parse-body body)
-        `(do ((,enumerator-sym (get-enumerator ,enumerable)))
-             ((not (move-next ,enumerator-sym)) ,@(when result `((let (,var) ,var ,result))))
-           (let ((,var (current ,enumerator-sym)))
-             ,@decls
-             (tagbody ,@body))))))
-
-  (defun %typecase-map-expander (type var enumerable result body env)
-    (with-gensyms (enumerable-sym step-fn)
-      (multiple-value-bind (body decl)
-          (parse-body body)
-        `(let ((,enumerable-sym ,enumerable))
-           (block nil
-             (flet ((,step-fn (,var)
-                      ,@decl
-                      (tagbody ,@body)))
-               (typecase ,enumerable-sym
-                 ,@(mapcar
-                    (lambda (expander)
-                      (destructuring-bind (expander-type . expansion-fn)
-                          expander
-                        `(,expander-type
-                          ,(funcall expansion-fn type var enumerable-sym result `(,@decl (,step-fn ,var)) env))))
-                    *%do-enumerable-expanders*)
-                 (t
-                  ,(%map-expander type var enumerable-sym result `(,@decl (,step-fn ,var)) env)))))))))
-
-  (defun %typecase-loop-expander (type var enumerable result body env)
-    (with-gensyms (enumerable-sym step-fn)
-      (multiple-value-bind (body decl)
-          (parse-body body)
-        `(let ((,enumerable-sym ,enumerable))
-           (block nil
-             (flet ((,step-fn (,var)
-                      ,@decl
-                      ,@body))
-               (typecase ,enumerable-sym
-                 ,@(mapcar
-                    (lambda (expander)
-                      (destructuring-bind (expander-type . expansion-fn)
-                          expander
-                        `(,expander-type
-                          ,(funcall expansion-fn type var enumerable-sym result `(,@decl (,step-fn ,var)) env))))
-                    *%do-enumerable-expanders*)
-                 (t
-                  ,(%loop-expander type var enumerable-sym result `(,@decl (,step-fn ,var)) env)))))))))
-
   (defun %subtype< (t1 t2)
     "Returns t if t1 is definitely a subtype of t2,
 and t2 is not a subtype of t1."
