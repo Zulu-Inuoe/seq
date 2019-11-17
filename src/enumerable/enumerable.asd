@@ -25,6 +25,5 @@
      (:file "enumerable-package"))))
   :depends-on
   (#:alexandria
-   #:cl-cont
    #:clojure-seq
    #:introspect-environment))
