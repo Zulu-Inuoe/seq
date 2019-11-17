@@ -20,9 +20,8 @@
   (:method ((col list))
     col)
   (:method ((col vector))
-    (if (zerop (length col))
-        nil
-        col)))
+    (unless (zerop (length col))
+      col)))
 
 (defgeneric seq-first (seq)
   (:documentation
@@ -40,6 +39,5 @@
     (cdr col))
   (:method ((col vector))
     (let ((len (length col)))
-      (if (<= len 1)
-          nil
-          (%make-collapsed-displaced-vector col 1 (1- len))))))
+      (when (> len 1)
+        (%make-collapsed-displaced-vector col 1 (1- len))))))
