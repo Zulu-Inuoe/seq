@@ -8,7 +8,7 @@
                (cond
                  (displaced-to
                   (recurse displaced-to (+ offset displaced-offset) count))
-                 ((= count (length vec))
+                 ((and (zerop offset) (= count (length vec)))
                   vec)
                  (t
                   (make-array count :element-type (array-element-type vec) :displaced-to vec :displaced-index-offset offset))))))
