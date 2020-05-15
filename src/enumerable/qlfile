@@ -1,3 +1,0 @@
-ql alexandria :latest
-ql cl-cont :latest
-ql introspect-environment :latest
