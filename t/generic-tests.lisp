@@ -48,9 +48,9 @@
 (test generic.aggregate
   (is (equal 6 (aggregate (%make-seq '(0 2 4)) #'+)))
   (is (equal 0
-                 (aggregate (%make-seq '(0)) (lambda (x y)
-                                   (declare (ignore x y))
-                                   (error "fail")))))
+             (aggregate (%make-seq '(0)) (lambda (x y)
+                                           (declare (ignore x y))
+                                           (error "fail")))))
   (signals error
     (aggregate (%make-seq '()) #'+)))
 
@@ -127,10 +127,10 @@
 
 (test generic.distinct
   (is (eset-equal '(0 1 2 3)
-                      (distinct (%make-seq '(0 1 0 1 3 2)))))
+                  (distinct (%make-seq '(0 1 0 1 3 2)))))
   (is (= 4
-             (length
-              (to-list (distinct (%make-seq '(0 1 0 1 3 2))))))))
+         (length
+          (to-list (distinct (%make-seq '(0 1 0 1 3 2))))))))
 
 (test generic.element-at
   (is (= 0 (element-at (%make-seq '(0 5 7)) 0)))
@@ -141,11 +141,11 @@
 
 (test generic.evaluate
   (is (eequal '(0 1 2)
-                  (evaluate (%make-seq (list (lambda () 0) (lambda () 1) (lambda () 2))))))
+              (evaluate (%make-seq (list (lambda () 0) (lambda () 1) (lambda () 2))))))
   (is (eequal '(3 5 8)
-                  (evaluate (%make-seq (list (lambda () 3) (lambda () 5) (lambda () 8))))))
+              (evaluate (%make-seq (list (lambda () 3) (lambda () 5) (lambda () 8))))))
   (is (eequal '()
-                  (evaluate (%make-seq '())))))
+              (evaluate (%make-seq '())))))
 
 (test generic.except
   (is (eequal '(1) (except (%make-seq '(1 2)) (%make-seq '(2)))))
@@ -353,15 +353,15 @@
 
 (test generic.eunion
   (is (eset-equal '(0 1 2 3)
-                      (eunion (%make-seq '(0 1 2 3)) (%make-seq '(0 1 2 3)))))
+                  (eunion (%make-seq '(0 1 2 3)) (%make-seq '(0 1 2 3)))))
   (is (eset-equal '(0 1 2 3)
-                      (eunion (%make-seq '()) (%make-seq '(0 1 2 2 3)))))
+                  (eunion (%make-seq '()) (%make-seq '(0 1 2 2 3)))))
   (is (eset-equal '(0 1 2 3)
-                      (eunion (%make-seq '(0 1 1 2 3)) (%make-seq '()))))
+                  (eunion (%make-seq '(0 1 1 2 3)) (%make-seq '()))))
   (is (eset-equal '(0 1 2 3)
-                      (eunion (%make-seq '(0 1 1)) (%make-seq '(3 2 3)))))
+                  (eunion (%make-seq '(0 1 1)) (%make-seq '(3 2 3)))))
   (is (= 1
-             (length (to-list (eunion (%make-seq '("foo" "FOO")) (%make-seq '("foo" "FOO")) #'string-equal))))))
+         (length (to-list (eunion (%make-seq '("foo" "FOO")) (%make-seq '("foo" "FOO")) #'string-equal))))))
 
 (test generic.where
   (is (eequal '(0 2) (where (%make-seq '(0 1 2 3)) #'evenp)))
@@ -378,21 +378,21 @@
 
 (test generic.to-hash-table
   (is (eset-equal
-           '((1 . 1) (2 . 2) (3 . 3))
-           (to-hash-table '(1 2 3) #'identity)
-           :test #'equal))
+       '((1 . 1) (2 . 2) (3 . 3))
+       (to-hash-table '(1 2 3) #'identity)
+       :test #'equal))
   (is (eset-equal
-           '()
-           (to-hash-table '() #'identity)
-           :test #'equal))
+       '()
+       (to-hash-table '() #'identity)
+       :test #'equal))
   (is (eset-equal
-           '((2 . 1) (3 . 2))
-           (to-hash-table '(1 2) #'1+)
-           :test #'equal))
+       '((2 . 1) (3 . 2))
+       (to-hash-table '(1 2) #'1+)
+       :test #'equal))
   (is (eset-equal
-           '((1 . 2) (2 . 3))
-           (to-hash-table '(1 2) #'identity :selector #'1+)
-           :test #'equal)))
+       '((1 . 2) (2 . 3))
+       (to-hash-table '(1 2) #'identity :selector #'1+)
+       :test #'equal)))
 
 (test generic.to-list
   (is (eequal '(1 2 3) (%make-seq '(1 2 3))))

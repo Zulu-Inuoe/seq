@@ -410,8 +410,7 @@
                (cons (funcall result-selector (seq-first seq))
                      (lazy-seq (splice-elts (seq-rest seq) col)))
                (recurse col))))
-    (lazy-seq
-      (recurse col))))
+    (lazy-seq (recurse col))))
 
 (defmethod select-many* (col selector &optional (result-selector #'identity))
   (labels ((recurse (col i)
@@ -424,8 +423,7 @@
                (cons (funcall result-selector (seq-first seq))
                      (lazy-seq (splice-elts (seq-rest seq) i col)))
                (recurse col i))))
-    (lazy-seq
-      (recurse col 0))))
+    (lazy-seq (recurse col 0))))
 
 (defmethod single (col &optional default)
   (let ((found-value nil)

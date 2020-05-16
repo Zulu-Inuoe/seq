@@ -29,9 +29,9 @@
 (test vector.aggregate
   (is (equal 6 (aggregate #(0 2 4) #'+)))
   (is (equal 0
-                 (aggregate #(0) (lambda (x y)
-                                   (declare (ignore x y))
-                                   (error "fail")))))
+             (aggregate #(0) (lambda (x y)
+                               (declare (ignore x y))
+                               (error "fail")))))
   (signals error
     (aggregate #() #'+)))
 
@@ -108,10 +108,10 @@
 
 (test vector.distinct
   (is (eset-equal '(0 1 2 3)
-                     (distinct #(0 1 0 1 3 2))))
+                  (distinct #(0 1 0 1 3 2))))
   (is (= 4
-             (length
-              (to-list (distinct #(0 1 0 1 3 2)))))))
+         (length
+          (to-list (distinct #(0 1 0 1 3 2)))))))
 
 (test vector.element-at
   (is (= 0 (element-at #(0 5 7) 0)))
@@ -122,11 +122,11 @@
 
 (test vector.evaluate
   (is (equal '(0 1 2)
-                 (to-list (evaluate (vector (lambda () 0) (lambda () 1) (lambda () 2))))))
+             (to-list (evaluate (vector (lambda () 0) (lambda () 1) (lambda () 2))))))
   (is (equal '(3 5 8)
-                 (to-list (evaluate (vector (lambda () 3) (lambda () 5) (lambda () 8))))))
+             (to-list (evaluate (vector (lambda () 3) (lambda () 5) (lambda () 8))))))
   (is (equal '()
-                 (to-list (evaluate '())))))
+             (to-list (evaluate '())))))
 
 (test vector.except
   (is (eequal '(1) (except #(1 2) #(2))))
