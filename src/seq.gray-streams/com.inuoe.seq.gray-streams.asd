@@ -1,4 +1,4 @@
-(defsystem #:#:com.inuoe.seq.gray-streams
+(defsystem #:com.inuoe.seq.gray-streams
   :version "0.0.0.0"
   :description "Gray Stream Seq integration"
   :author "Wilfredo Velázquez-Rodríguez <zulu.inuoe@gmail.com>"
