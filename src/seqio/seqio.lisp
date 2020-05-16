@@ -217,6 +217,14 @@ Each subsequence is a fresh `vector' of size [1,size].
  `test' defaults to `eql'
  `limit' when non-nil, serves as the inclusive upper-limit of `count'"))
 
+(defgeneric scan (col transformer)
+  (:documentation
+   "As `aggregate', but lazily yields the collection (possibly empty) of each intermediate value."))
+
+(defgeneric scan* (col transformer seed)
+  (:documentation
+   "As `aggregate*', but lazily yields the collection (including initial seed) of each intermediate values."))
+
 (defgeneric select (col selector)
   (:documentation
    "Maps each element of `col' to a new `col' using `selector'.

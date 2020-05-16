@@ -57,6 +57,8 @@
    #:repeat
    #:ereverse
    #:run-length-encode
+   #:scan
+   #:scan*
    #:select
    #:select*
    #:select-many

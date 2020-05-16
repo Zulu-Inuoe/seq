@@ -242,6 +242,14 @@
 (test generic.run-length-encode.limit-elements
   (is (eequal '((nil . 5) (nil . 5)) (run-length-encode (make-list 10) :limit 5))))
 
+(test generic.scan
+  (is (eequal '(1 3 6 10) (scan '(1 2 3 4) #'+)))
+  (is (eequal '() (scan '() #'+))))
+
+(test generic.scan*
+  (is (eequal '(0 1 3 6 10) (scan* '(1 2 3 4) #'+ 0)))
+  (is (eequal '(0) (scan* '() #'+ 0))))
+
 (test generic.select
   (is (eequal '(1 2 3) (select (%make-seq '(0 1 2)) #'1+)))
   (is (eequal '(1) (select (%make-seq '(0)) #'1+)))

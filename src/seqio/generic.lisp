@@ -386,6 +386,27 @@
       (when-let ((seq (col-seq col)))
         (recurse (seq-first seq) (seq-rest seq))))))
 
+(defmethod scan (col transformer)
+  (labels ((recurse (col value)
+             (when-let ((seq (col-seq col)))
+               (let ((value (funcall transformer value (seq-first seq))))
+                 (cons value
+                       (lazy-seq (recurse (seq-rest seq) value)))))))
+    (lazy-seq
+      (when-let ((seq (col-seq col)))
+        (let ((value (seq-first seq)))
+          (cons value
+                (lazy-seq (recurse (seq-rest seq) value))))))))
+
+(defmethod scan* (col transformer seed)
+  (labels ((recurse (col value)
+             (when-let ((seq (col-seq col)))
+               (let ((value (funcall transformer value (seq-first seq))))
+                 (cons value
+                       (lazy-seq (recurse (seq-rest seq) value)))))))
+    (cons seed
+          (lazy-seq (recurse col seed)))))
+
 (defmethod select (col selector)
   (labels ((recurse (col)
              (when-let ((seq (col-seq col)))
