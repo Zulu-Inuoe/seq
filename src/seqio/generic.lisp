@@ -391,14 +391,14 @@
              (when-let ((seq (col-seq col)))
                (cons (funcall selector (seq-first seq))
                      (lazy-seq (recurse (seq-rest seq)))))))
-    (recurse col)))
+    (lazy-seq (recurse col))))
 
 (defmethod select* (col selector)
   (labels ((recurse (col i)
              (when-let ((seq (col-seq col)))
                (cons (funcall selector (seq-first seq) i)
                      (lazy-seq (recurse (seq-rest seq) (1+ i)))))))
-    (recurse col 0)))
+    (lazy-seq (recurse col 0))))
 
 (defmethod select-many (col selector &optional (result-selector #'identity))
   (labels ((recurse (col)

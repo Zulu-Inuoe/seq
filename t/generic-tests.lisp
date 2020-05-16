@@ -12,7 +12,8 @@
    #:is
    #:is-true
    #:is-false
-   #:signals)
+   #:signals
+   #:finishes)
   (:export
    #:seqio.generic))
 
@@ -246,10 +247,16 @@
   (is (eequal '(1) (select (%make-seq '(0)) #'1+)))
   (is (eequal '() (select (%make-seq '()) #'1+))))
 
+(test generic.select.is-lazy
+  (finishes (select (lazy-seq (error "eager")) #'identity)))
+
 (test generic.select*
   (is (eequal '((0 . 0) (1 . 1) (2 . 2)) (select* (%make-seq '(0 1 2)) #'cons)))
   (is (eequal '((a . 0) (b . 1) (c . 2)) (select* (%make-seq '(a b c)) #'cons)))
   (is (eequal '() (select* (%make-seq '()) #'cons))))
+
+(test generic.select*.is-lazy
+  (finishes (select* (lazy-seq (error "eager")) #'identity)))
 
 (test generic.select-many
   (is (eequal '(1 2 2) (select-many (%make-seq '(0 1 2)) (lambda (v) (repeat v v)))))
