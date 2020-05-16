@@ -159,6 +159,17 @@
   (is (eq :sentinel (elast* #(1) #'evenp :sentinel)))
   (is (eq :sentinel (elast* #() #'evenp :sentinel))))
 
+(test vector.pad
+  (is (eequal '(0 1 nil) (pad #(0 1) 3)))
+  (is (eequal '(0 1) (pad #(0 1) 0)))
+  (is (eequal '(0 1 2 2 2) (pad #(0 1) 5 2))))
+
+(test vector.pad*
+  (is (eequal '(0 1 2) (pad* #(0 1) 3)))
+  (is (eequal '(0 1) (pad* #(0 1) 0)))
+  (is (eequal '(0 1 2 3 4) (pad* #(0 1) 5)))
+  (is (eequal '(0 1 t t t) (pad* #(0 1) 5 (constantly t)))))
+
 (test vector.prepend
   (is (eequal '(0 1 2) (prepend #(1 2) 0)))
   (is (eequal '(0) (prepend #() 0))))

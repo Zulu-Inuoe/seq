@@ -332,6 +332,31 @@
 (defmethod order-by-descending (col key-selector &optional (comparer #'-))
   (%order-by-impl col key-selector comparer #'plusp))
 
+(defmethod pad (col width &optional padding)
+  (check-type width (integer 0))
+  (labels ((yield-col (col i)
+             (if-let ((seq (col-seq col)))
+               (cons (seq-first seq) (lazy-seq (yield-col (seq-rest seq) (1+ i))))
+               (yield-padding i)))
+           (yield-padding (i)
+             (when (< i width)
+               (cons padding (lazy-seq (yield-padding (1+ i)))))))
+    (lazy-seq (yield-col col 0))))
+
+(defmethod pad* (col width &optional padding-selector
+                 &aux (padding-selector (or padding-selector #'identity)))
+  (check-type width (integer 0))
+  (labels ((yield-col (col i)
+             (if-let ((seq (col-seq col)))
+               (cons (seq-first seq)
+                     (lazy-seq (yield-col (seq-rest seq) (1+ i))))
+               (yield-padding i)))
+           (yield-padding (i)
+             (when (< i width)
+               (cons (funcall padding-selector i)
+                     (lazy-seq (yield-padding (1+ i)))))))
+    (lazy-seq (yield-col col 0))))
+
 (defmethod prepend (col element)
   (cons element col))
 

@@ -167,6 +167,16 @@ Each subsequence is a fresh `vector' of size [1,size].
 `key-selector' will be used to determine value for each element.
 `comparer' is a function receiving keys a and b,returning a negative value if a is less than b, 0 if equal, and positive if greater."))
 
+(defgeneric pad (col width &optional padding)
+  (:documentation
+   "Pads `col' with `padding' if it contains less than `width' elements."))
+
+(defgeneric pad* (col width &optional padding-selector)
+  (:documentation
+   "Pads `col' with if it contains less than `width' elements by calling `padding-selector' with the index of the element.
+
+ `padding-selector' - A function designator, called with the index of the 'missing' element."))
+
 (defgeneric prepend (col element)
   (:documentation
    "Adds `element' to the beginning of `col'."))

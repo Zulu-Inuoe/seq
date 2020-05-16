@@ -215,6 +215,17 @@
 (test generic.order-by.sort-strings-length-minus
   (is (eequal '("short" "medium" "longlong") (order-by '("longlong" "short" "medium") #'identity (lambda (a b) (- (length a) (length b)))))))
 
+(test generic.pad
+  (is (eequal '(0 1 nil) (pad (%make-seq '(0 1)) 3)))
+  (is (eequal '(0 1) (pad (%make-seq '(0 1)) 0)))
+  (is (eequal '(0 1 2 2 2) (pad (%make-seq '(0 1)) 5 2))))
+
+(test generic.pad*
+  (is (eequal '(0 1 2) (pad* (%make-seq '(0 1)) 3)))
+  (is (eequal '(0 1) (pad* (%make-seq '(0 1)) 0)))
+  (is (eequal '(0 1 2 3 4) (pad* (%make-seq '(0 1)) 5)))
+  (is (eequal '(0 1 t t t) (pad* (%make-seq '(0 1)) 5 (constantly t)))))
+
 (test generic.prepend
   (is (eequal '(0 1 2) (prepend (%make-seq '(1 2)) 0)))
   (is (eequal '(0) (prepend (%make-seq '()) 0))))

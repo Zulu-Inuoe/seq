@@ -65,6 +65,38 @@
       :return elt
     :finally (return default)))
 
+(defmethod pad ((col vector) width &optional padding)
+  (check-type width (integer 0))
+  (let ((len (length col)))
+    (if (<= width len)
+        col
+        (labels ((yield-col (i)
+                   (if (< i len)
+                       (cons (aref col i)
+                             (lazy-seq (yield-col (1+ i))))
+                       (yield-padding i)))
+                 (yield-padding (i)
+                   (when (< i width)
+                     (cons padding (lazy-seq (yield-padding (1+ i)))))))
+          (lazy-seq (yield-col 0))))))
+
+(defmethod pad* ((col vector) width &optional padding-selector
+                 &aux (padding-selector (or padding-selector #'identity)))
+  (check-type width (integer 0))
+  (let ((len (length col)))
+    (if (<= width len)
+        col
+        (labels ((yield-col (i)
+                   (if (< i len)
+                       (cons (aref col i)
+                             (lazy-seq (yield-col (1+ i))))
+                       (yield-padding i)))
+                 (yield-padding (i)
+                   (when (< i width)
+                     (cons (funcall padding-selector i)
+                           (lazy-seq (yield-padding (1+ i)))))))
+          (lazy-seq (yield-col 0))))))
+
 (defmethod ereverse ((col vector))
   (labels ((recurse (i)
              (when (>= i 0)

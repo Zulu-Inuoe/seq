@@ -50,6 +50,8 @@
    #:elast*
    #:order-by
    #:order-by-descending
+   #:pad
+   #:pad*
    #:prepend
    #:range
    #:repeat
