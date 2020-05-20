@@ -301,6 +301,23 @@ If more than one element matches `predicate', an error is signalled instead."))
 `key-selector' will be used to determine value for each element.
 `comparer' is a function receiving keys a and b,returning a negative value if a is less than b, 0 if equal, and positive if greater."))
 
+(defun unfold (state generator
+               &key predicate state-selector result-selector
+               &aux
+                 (predicate (or predicate (constantly t)))
+                 (state-selector (or state-selector #'identity))
+                 (result-selector (or result-selector #'identity)))
+  "Produces a sequence by applying `generator' to `state'.
+ `predicate' - applied to the result to control termination
+ `result-selector' - applied to the result to yield it
+ `state-selector' - applied to the result to determine the new state"
+  (labels ((recurse (state)
+             (let ((step (funcall generator state)))
+               (when (funcall predicate step)
+                 (cons (funcall result-selector step)
+                       (lazy-seq (recurse (funcall state-selector step))))))))
+    (lazy-seq (recurse state))))
+
 (defgeneric eunion (first second &optional test)
   (:documentation
    "Produces the set union between `first' and `second' by using `test'.

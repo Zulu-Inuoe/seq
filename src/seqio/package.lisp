@@ -76,6 +76,7 @@
    #:take-while
    #:then-by
    #:then-by-descending
+   #:unfold
    #:eunion
    #:where
    #:window
