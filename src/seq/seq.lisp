@@ -110,7 +110,8 @@
     (flet ((kv-fcall (k v)
              (funcall fn (cons k v))))
       (declare (dynamic-extent #'kv-fcall))
-      (maphash #'kv-fcall col)))
+      (maphash #'kv-fcall col))
+    (values))
   (:method  (fn (col stream))
     (cond
       ((subtypep (stream-element-type col) 'integer)
