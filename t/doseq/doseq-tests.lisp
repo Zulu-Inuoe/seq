@@ -12,12 +12,23 @@
    #:finishes)
   (:export
    ;;; Test suites
-   #:doseq))
+   #:doseq
+
+   #:run
+   #:main))
 
 (in-package #:com.inuoe.doseq-tests)
 
 (def-suite doseq
   :description "Tests the doseq macro.")
+
+(defun run ()
+  (fiveam:run! 'doseq))
+
+(defun main (&rest args)
+  (declare (ignore args))
+  (let ((result (run)))
+    (if result 0 -1)))
 
 (in-suite doseq)
 
@@ -53,4 +64,3 @@
         (push kvp kvps))
       (setf kvps (alist-hash-table kvps))
       (is (equalp (test-fn-hash) kvps)))))
-

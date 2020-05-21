@@ -6,7 +6,6 @@
   :serial t
   :components
   ((:file "seqio-tests")
-   (:file "doseq-tests")
    (:file "generic-tests")
    (:file "list-tests")
    (:file "vector-tests")

@@ -9,15 +9,14 @@
   (:import-from
    #:fiveam
    #:def-suite
-   #:in-suite
-   #:run!)
+   #:in-suite)
   (:export
    #:eequal
    #:eequalp
    #:eset-equal
 
    ;;; Programmatic run-tests
-   #:run-tests
+   #:run
 
    ;;; Test suites for specializing the 'expressions'
    #:seqio
@@ -32,6 +31,14 @@
 
 (in-suite seqio)
 
+(defun run ()
+  (fiveam:run! 'seqio))
+
+(defun main (&rest args)
+  (declare (ignore args))
+  (let ((result (run)))
+    (if result 0 -1)))
+
 (defun eequal (e1 e2)
   "As `equal', but forces arguments by `to-list'"
   (equal (to-list e1) (to-list e2)))
@@ -44,10 +51,3 @@
   "As `set-equal', but forces arguments by `to-list'"
   (set-equal (to-list e1) (to-list e2) :test test :key key))
 
-(defun run-tests ()
-  (run! 'seqio))
-
-(defun main (&rest args)
-  (declare (ignore args))
-  (let ((result (run-tests)))
-    (if result 0 -1)))
