@@ -13,5 +13,4 @@
   :depends-on
   (#:fiveam
    #:com.inuoe.seq
-   #:com.inuoe.seqio
-   #:com.inuoe.doseq))
+   #:com.inuoe.seqio))
