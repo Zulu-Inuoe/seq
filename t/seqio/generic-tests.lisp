@@ -26,8 +26,8 @@
             (:predicate nil))
   (%test-seq-elements nil :type list :read-only t))
 
-(defmethod mapcol (fn (seq %test-seq))
-  (mapc fn (%test-seq-elements seq))
+(defmethod mapcol ((seq %test-seq) fn)
+  (mapc (%test-seq-elements seq) fn)
   (values))
 
 (defmethod col-seq ((col %test-seq))

@@ -8,32 +8,31 @@
              (encounter-rest (x)
                (setf accum (funcall aggregator accum x))))
       (setf step #'encounter-first)
-      (mapcol (lambda (x) (funcall step x)) col)
+      (mapcol col (lambda (x) (funcall step x)))
       (unless (eq step #'encounter-rest)
         (error "col contains no elements.")))
     accum))
 
 (defmethod aggregate* (col aggregator seed)
   (let ((accum seed))
-    (mapcol (lambda (x)  (setf accum (funcall aggregator accum x)))
-            col)
+    (mapcol col (lambda (x) (setf accum (funcall aggregator accum x))))
     accum))
 
 (defmethod all (col predicate)
   (not (any* col (complement predicate))))
 
 (defmethod any (col)
-  (mapcol (lambda (_)
+  (mapcol col
+          (lambda (_)
             (declare (ignore _))
-            (return-from any t))
-          col)
+            (return-from any t)))
   nil)
 
 (defmethod any* (col predicate)
-  (mapcol (lambda (x)
+  (mapcol col
+          (lambda (x)
             (when (funcall predicate x)
-              (return-from any* t)))
-          col)
+              (return-from any* t))))
   nil)
 
 (defmethod eappend (col element)
@@ -80,29 +79,29 @@
     (yield-first first)))
 
 (defmethod consume (col)
-  (mapcol (lambda (_) (declare (ignore _))) col)
+  (mapcol col (lambda (_) (declare (ignore _))))
   (values))
 
 (defmethod contains (col item &optional (test #'eql))
-  (mapcol (lambda (x)
+  (mapcol col
+          (lambda (x)
             (when (funcall test x item)
-              (return-from contains t)))
-          col))
+              (return-from contains t)))))
 
 (defmethod ecount (col)
   (let ((count 0))
-    (mapcol (lambda (_)
+    (mapcol col
+            (lambda (_)
               (declare (ignore _))
-              (incf count))
-            col)
+              (incf count)))
     count))
 
 (defmethod ecount* (col predicate)
   (let ((count 0))
-    (mapcol (lambda (x)
+    (mapcol col
+            (lambda (x)
               (when (funcall predicate x)
-                (incf count)))
-            col)
+                (incf count))))
     count))
 
 (defmethod default-if-empty (col &optional default)
@@ -161,14 +160,14 @@
       (lazy-seq (recurse first second)))))
 
 (defmethod efirst (col &optional default)
-  (mapcol (lambda (x) (return-from efirst x)) col)
+  (mapcol col (lambda (x) (return-from efirst x)))
   default)
 
 (defmethod efirst* (col predicate &optional default)
-  (mapcol (lambda (x)
+  (mapcol col
+          (lambda (x)
             (when (funcall predicate x)
-              (return-from efirst* x)))
-          col)
+              (return-from efirst* x))))
   default)
 
 (defstruct (grouping-col
@@ -265,10 +264,10 @@
   (efirst (ereverse col) default))
 
 (defmethod elast* (col predicate &optional default)
-  (mapcol (lambda (x)
+  (mapcol (ereverse col)
+          (lambda (x)
             (when (funcall predicate x)
-              (return-from elast* x)))
-          (ereverse col))
+              (return-from elast* x))))
   default)
 
 (defstruct (ordered-col
@@ -363,7 +362,7 @@
 (defmethod ereverse (col)
   (lazy-seq
     (let ((stack ()))
-      (mapcol (lambda (x) (push x stack)) col)
+      (mapcol col (lambda (x) (push x stack)))
       stack)))
 
 (defmethod run-length-encode (col &key (test #'eql) limit)
@@ -449,24 +448,24 @@
 (defmethod single (col &optional default)
   (let ((found-value nil)
         (ret default))
-    (mapcol (lambda (x)
+    (mapcol col
+            (lambda (x)
               (when found-value
                 (error "more than one element present in the col"))
               (setf ret x
-                    found-value t))
-            col)
+                    found-value t)))
     ret))
 
 (defmethod single* (col predicate &optional default)
   (let ((found-value nil)
         (ret default))
-    (mapcol (lambda (x)
+    (mapcol col
+            (lambda (x)
               (when (funcall predicate x)
                 (when found-value
                   (error "more than one element present in the col"))
                 (setf ret x
-                      found-value t)))
-            col)
+                      found-value t))))
     ret))
 
 (defmethod skip (col count)
@@ -611,21 +610,21 @@
 
 (defmethod to-hash-table (col key &key (selector #'identity) (test #'eql))
   (let ((ret (make-hash-table :test test)))
-    (mapcol (lambda (x) (setf (gethash (funcall key x) ret) (funcall selector x))) col)
+    (mapcol col (lambda (x) (setf (gethash (funcall key x) ret) (funcall selector x))))
     ret))
 
 (defmethod to-list (col)
   (let ((res ()))
-    (mapcol (lambda (x) (push x res)) col)
+    (mapcol col (lambda (x) (push x res)))
     (nreverse res)))
 
 (defmethod to-vector (col &key (element-type t) adjustable fill-pointer-p)
   (let ((res ())
         (len 0))
-    (mapcol (lambda (x)
+    (mapcol col
+            (lambda (x)
               (push x res)
-              (incf len))
-            col)
+              (incf len)))
     (make-array len
                 :element-type element-type
                 :initial-contents (nreverse res)

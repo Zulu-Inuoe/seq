@@ -19,6 +19,6 @@
                            (recurse))))))
         (recurse)))))
 
-(defmethod mapcol (fn (node-set xpath:node-set))
+(defmethod mapcol ((node-set xpath:node-set) fn)
   (xpath:map-node-set fn node-set)
   (values))

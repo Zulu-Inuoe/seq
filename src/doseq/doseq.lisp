@@ -30,7 +30,7 @@
     (multiple-value-bind (body decl)
         (parse-body body :whole whole)
       `(block nil
-         (mapcol (lambda (,var) ,@decl (tagbody ,@body)) ,col)
+         (mapcol ,col (lambda (,var) ,@decl (tagbody ,@body)))
          ,(when result `(let (,var) ,var ,result)))))
 
   (defun %subtype< (t1 t2)

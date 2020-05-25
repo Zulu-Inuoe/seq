@@ -17,7 +17,7 @@
                       (cons val (lazy-seq (recurse-bytes))))))
     (recurse-bytes)))
 
-(defmethod mapcol (fn (buffer fast-io:input-buffer))
+(defmethod mapcol ((buffer fast-io:input-buffer) fn)
   (when-let ((vect (fast-io:input-buffer-vector buffer)))
     (let ((pos (fast-io::input-buffer-pos buffer))
           (len (length vect)))

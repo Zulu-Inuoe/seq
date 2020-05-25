@@ -83,36 +83,36 @@
         (t
          (error "Unsupported stream element type '~A'" stream-type))))))
 
-(defun %mapcol-generic (fn col)
+(defun %mapcol-generic (col fn)
   (loop
     :for seq := (col-seq col) :then (col-seq (seq-rest seq))
     :while seq
     :do (funcall fn (seq-first seq)))
   (values))
 
-(defgeneric mapcol (fn col)
+(defgeneric mapcol (col fn)
   (:documentation
    "Eagerly apply `fn' to every element in `col'.")
-  (:method (fn col)
-    (%mapcol-generic fn col))
-  (:method (fn (col null))
+  (:method (col fn)
+    (%mapcol-generic col fn))
+  (:method ((col null) fn)
     (values))
-  (:method (fn (col list))
-    (%mapcol-generic fn col))
-  (:method  (fn (col vector))
+  (:method ((col list) fn)
+    (%mapcol-generic col fn))
+  (:method  ((col vector) fn)
     (loop :for x :across col
           :do (funcall fn x))
     (values))
-  (:method (fn (col sequence))
+  (:method ((col sequence) fn)
     (map nil fn col)
     (values))
-  (:method  (fn (col hash-table))
+  (:method  ((col hash-table) fn)
     (flet ((kv-fcall (k v)
              (funcall fn (cons k v))))
       (declare (dynamic-extent #'kv-fcall))
       (maphash #'kv-fcall col))
     (values))
-  (:method  (fn (col stream))
+  (:method  ((col stream) fn)
     (cond
       ((subtypep (stream-element-type col) 'integer)
        (loop :for x := (read-byte col nil)
