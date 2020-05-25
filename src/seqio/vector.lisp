@@ -28,12 +28,11 @@
   (labels ((recurse (pos e-len)
              (when (< pos e-len)
                (let ((len (min size (- e-len pos))))
-                 (lazy-seq
-                   (cons
-                    (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
-                             col
-                             :start2 pos)
-                    (recurse (+ pos size) e-len)))))))
+                 (cons
+                  (replace (make-array len :element-type element-type :adjustable adjustable :fill-pointer (and fill-pointer-p t))
+                           col
+                           :start2 pos)
+                  (lazy-seq (recurse (+ pos size) e-len)))))))
     (lazy-seq (recurse 0 (length col)))))
 
 (defmethod consume ((col vector))
@@ -125,18 +124,20 @@
     :finally (return ret)))
 
 (defmethod skip ((col vector) count)
-  (let* ((len (length col))
-         (remaining (- len count)))
-    (cond
-      ((<= remaining 0) nil)
-      ((>= remaining len) col)
-      (t (%make-collapsed-displaced-vector col count remaining)))))
+  (if (<= count 0)
+      col
+      (let ((len (length col)))
+        (if (<= len count)
+            nil
+            (%make-collapsed-displaced-vector col count (- len count))))))
 
 (defmethod skip-last ((col vector) count)
-  (let ((len (length col)))
-    (cond
-      ((>= count len) nil)
-      (t (%make-collapsed-displaced-vector col 0 (min len (- len count)))))))
+  (if (<= count 0)
+      col
+      (let ((len (length col)))
+        (if (<= len count)
+            nil
+            (%make-collapsed-displaced-vector col 0 (- len count))))))
 
 (defmethod skip-until ((col vector) predicate)
   (lazy-seq
@@ -155,43 +156,46 @@
         :return (%make-collapsed-displaced-vector col i (- len i)))))
 
 (defmethod take ((col vector) count)
-  (let* ((len (length col))
-         (to-take (max 0 (min len count))))
-    (cond
-      ((zerop to-take) nil)
-      ((= to-take len) col)
-      (t (%make-collapsed-displaced-vector col 0 count)))))
+  (cond
+    ((<= count 0)
+     nil)
+    ((<= (length col) count)
+     col)
+    (t
+     (%make-collapsed-displaced-vector col 0 count))))
 
 (defmethod take-last ((col vector) count)
   (when (minusp count)
     (error "count cannot be negative, was ~A" count))
-  (let ((len (length col)))
-    (cond
-      ((>= count len) col)
-      ((zerop count) nil)
-      (t (%make-collapsed-displaced-vector col (- len count) count)))))
+  (if (zerop count)
+      nil
+      (let ((len (length col)))
+        (if (>= count len)
+            col
+            (%make-collapsed-displaced-vector col (- len count) count)))))
 
 (defmethod window ((col vector) size &key (element-type (array-element-type col)) adjustable fill-pointer-p)
-  (cond
-    ((< (length col) size)
-     nil)
-    ((= (length col) size)
-     (list (make-array size :initial-contents col
-                            :element-type element-type
-                            :adjustable adjustable
-                            :fill-pointer (and fill-pointer-p t))))
-    (t
-     (labels ((recurse (i end-idx)
-                (unless (> i end-idx)
-                  (lazy-seq
-                    (cons
-                     (replace (make-array size :element-type element-type
-                                               :adjustable adjustable
-                                               :fill-pointer (and fill-pointer-p t))
-                              col
-                              :start2 i)
-                     (recurse (1+ i) end-idx))))))
-       (recurse 0 (- (length col) size))))))
+  (let ((len (length col)))
+    (cond
+      ((< len size)
+       nil)
+      ((= len size)
+       (list (make-array size :initial-contents col
+                              :element-type element-type
+                              :adjustable adjustable
+                              :fill-pointer (and fill-pointer-p t))))
+      (t
+       (labels ((recurse (i end-idx)
+                  (unless (> i end-idx)
+                    (lazy-seq
+                      (cons
+                       (replace (make-array size :element-type element-type
+                                                 :adjustable adjustable
+                                                 :fill-pointer (and fill-pointer-p t))
+                                col
+                                :start2 i)
+                       (recurse (1+ i) end-idx))))))
+         (recurse 0 (- len size)))))))
 
 (defmethod to-vector ((col vector) &key (element-type (array-element-type col)) adjustable fill-pointer-p)
   (make-array (length col)
