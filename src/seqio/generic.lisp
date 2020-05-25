@@ -160,8 +160,9 @@
       (lazy-seq (recurse first second)))))
 
 (defmethod efirst (col &optional default)
-  (mapcol col (lambda (x) (return-from efirst x)))
-  default)
+  (if-let ((seq (col-seq col)))
+    (seq-first seq)
+    default))
 
 (defmethod efirst* (col predicate &optional default)
   (mapcol col
