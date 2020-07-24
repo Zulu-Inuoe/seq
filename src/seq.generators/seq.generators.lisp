@@ -55,7 +55,7 @@
                            (cl-cont:let/cc ,cc
                              (declare (ignore ,cc))
                              (values nil nil (lambda () (values nil nil nil))))))
-                    (progn ,@body)
+                    ,@body
                     (yield-break)))))))))
 
 (defmacro generator (&whole whole args &body body)

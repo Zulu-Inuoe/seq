@@ -27,7 +27,9 @@
    :type t))
 
 (defmacro lazy-seq (&body body)
-  `(%make-lazy-seq (lambda () (col-seq (progn ,@body)))))
+  `(%make-lazy-seq (lambda () (col-seq ,(if (null (cdr body))
+                                       (car body)
+                                       `(progn ,@body))))))
 
 (defun %make-collapsed-displaced-vector (vec offset count)
   (labels ((recurse (vec offset count)
