@@ -13,7 +13,8 @@
    #:seq-rest
 
    #:lazy-seq
-   #:lazy-seq-p))
+   #:lazy-seq-p
+   #:make-lazy-seq))
 
 (in-package #:com.inuoe.seq)
 
@@ -26,10 +27,11 @@
   (%lazy-seq-value nil
    :type t))
 
+(defun make-lazy-seq (factory)
+  (%make-lazy-seq factory))
+
 (defmacro lazy-seq (&body body)
-  `(%make-lazy-seq (lambda () (col-seq ,(if (null (cdr body))
-                                       (car body)
-                                       `(progn ,@body))))))
+  `(make-lazy-seq (lambda () ,@body)))
 
 (defun %make-collapsed-displaced-vector (vec offset count)
   (labels ((recurse (vec offset count)
@@ -61,7 +63,7 @@
                      (%lazy-seq-value %lazy-seq-value))
         lazy-seq
       (when %lazy-seq-factory
-        (setf %lazy-seq-value (funcall %lazy-seq-factory)
+        (setf %lazy-seq-value (col-seq (funcall %lazy-seq-factory))
               %lazy-seq-factory nil))
       %lazy-seq-value))
   (:method ((col package))
