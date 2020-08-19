@@ -4,6 +4,7 @@
   (:import-from
    #:alexandria
    #:hash-table-alist
+   #:required-argument
    #:when-let)
   (:export
    #:col-seq
