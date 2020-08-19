@@ -59,14 +59,11 @@
     ;;with-hash-table-iterator has unspecified behavior outside of dynamic extent
     ;;so we can't just close it over
     (hash-table-alist col))
-  (:method  ((lazy-seq lazy-seq))
-    (with-accessors ((%lazy-seq-factory %lazy-seq-factory)
-                     (%lazy-seq-value %lazy-seq-value))
-        lazy-seq
-      (when %lazy-seq-factory
-        (setf %lazy-seq-value (col-seq (funcall %lazy-seq-factory))
-              %lazy-seq-factory nil))
-      %lazy-seq-value))
+  (:method  ((col lazy-seq))
+    (if-let ((factory (%lazy-seq-factory col)))
+      (setf (%lazy-seq-factory col) nil
+            (%lazy-seq-value col) (col-seq (funcall factory)))
+      (%lazy-seq-value col)))
   (:method ((col package))
     (let ((res ()))
       (do-symbols (s col)
