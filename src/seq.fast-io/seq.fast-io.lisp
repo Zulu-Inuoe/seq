@@ -1,4 +1,4 @@
-(defpackage #:com.inuoe.seq-fastio
+(defpackage #:com.inuoe.seq.fast-io
   (:use #:cl)
   (:import-from
    #:alexandria
@@ -9,7 +9,7 @@
    #:lazy-seq
    #:mapcol))
 
-(in-package #:com.inuoe.seq-fastio)
+(in-package #:com.inuoe.seq.fast-io)
 
 (defmethod col-seq ((buffer fast-io:input-buffer))
   (labels ((recurse-bytes ()
