@@ -4,6 +4,7 @@
   (:import-from
    #:alexandria
    #:hash-table-alist
+   #:if-let
    #:required-argument
    #:when-let)
   (:export
@@ -19,17 +20,27 @@
 
 (in-package #:com.inuoe.seq)
 
-(defstruct (lazy-seq
-            (:conc-name nil)
-            (:constructor %make-lazy-seq (%lazy-seq-factory))
-            (:copier nil))
-  (%lazy-seq-factory (required-argument)
-   :type (or function symbol null))
-  (%lazy-seq-value nil
-   :type t))
+(defclass lazy-seq ()
+  ((%lazy-seq-factory
+    :initform (required-argument :factory)
+    :type (or function symbol null)
+    :initarg :factory)
+   (%lazy-seq-value
+    :initform nil
+    :type t)))
+
+(defun lazy-seq-p (x)
+  (typep x 'lazy-seq))
+
+(declaim (inline %lazy-seq-value))
+(defun %lazy-seq-value (lazy-seq)
+  (if-let ((factory (slot-value lazy-seq '%lazy-seq-factory)))
+    (setf (slot-value lazy-seq '%lazy-seq-factory) nil
+          (slot-value lazy-seq '%lazy-seq-value) (col-seq (funcall factory)))
+    (slot-value lazy-seq '%lazy-seq-value)))
 
 (defun make-lazy-seq (factory)
-  (%make-lazy-seq factory))
+  (make-instance 'lazy-seq :factory factory))
 
 (defmacro lazy-seq (&body body)
   `(make-lazy-seq (lambda () ,@body)))
@@ -60,10 +71,7 @@
     ;;so we can't just close it over
     (hash-table-alist col))
   (:method  ((col lazy-seq))
-    (if-let ((factory (%lazy-seq-factory col)))
-      (setf (%lazy-seq-factory col) nil
-            (%lazy-seq-value col) (col-seq (funcall factory)))
-      (%lazy-seq-value col)))
+    (%lazy-seq-value col))
   (:method ((col package))
     (let ((res ()))
       (do-symbols (s col)
@@ -124,7 +132,9 @@
        (loop :for x := (read-char col nil)
              :while x
              :do (funcall fn x))))
-    (values)))
+    (values))
+  (:method ((col lazy-seq) fn)
+    (%mapcol-generic col fn)))
 
 (defgeneric seq-first (seq)
   (:documentation
@@ -150,9 +160,9 @@
         (%make-collapsed-displaced-vector seq 1 (1- len))))))
 
 (defmethod print-object ((object lazy-seq) stream)
-  (print-unreadable-object (object stream :type t)
-    (format stream "[")
-    (if (null (%lazy-seq-factory object))
+  (print-unreadable-object (object stream)
+    (format stream "LAZY-SEQ [")
+    (if (null (slot-value object '%lazy-seq-factory))
       (loop
         :with seq := (%lazy-seq-value object)
         :with first := t
@@ -163,7 +173,7 @@
            (setf first nil)
            (let ((rest (seq-rest seq)))
              (cond
-               ((and (lazy-seq-p rest) (%lazy-seq-factory rest))
+               ((and (lazy-seq-p rest) (slot-value rest '%lazy-seq-factory))
                 ;; next sequence is lazy and not evaluated
                 (format stream " . ")
                 (format stream "~A" rest)
