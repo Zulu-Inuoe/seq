@@ -89,9 +89,6 @@
     (col-seq (lazy-seq (error "whoops")))))
 
 (test lazy-seq-seq-first-gets-value
-  (is (= 1 (seq-first (lazy-seq (cons 1 nil))))))
-
-(test lazy-seq-seq-first-gets-value
   (is (= 1 (seq-first (lazy-seq (list 1))))))
 
 (test lazy-seq-caches-value
