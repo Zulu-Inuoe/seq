@@ -44,6 +44,13 @@
 (test seq-first-list-returns-cdr
   (is (equal '(2 3) (seq-rest '(1 2 3)))))
 
+(test col-seq-list-stays-at-same-element
+  (let* ((seq (col-seq '(1 2 3)))
+         (seq2 (col-seq (seq-rest seq))))
+    (is (= (seq-first seq)))
+    (is (= (seq-first seq2)))
+    (is (= (seq-first seq)))))
+
 (test col-seq-vector-returns-self
   (is (equalp #(1 2 3) (col-seq #(1 2 3)))))
 
@@ -65,6 +72,13 @@
     (is (= 3 (seq-first seq)))
     (setf seq (col-seq (seq-rest seq)))
     (is (null seq))))
+
+(test col-seq-vector-stays-at-same-element
+  (let* ((seq (col-seq #(1 2 3)))
+         (seq2 (col-seq (seq-rest seq))))
+    (is (= (seq-first seq)))
+    (is (= (seq-first seq2)))
+    (is (= (seq-first seq)))))
 
 (test col-seq-empty-hash-returns-nil
   (is (null (col-seq (make-hash-table)))))
