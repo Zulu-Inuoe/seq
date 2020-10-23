@@ -57,6 +57,9 @@
 (test col-seq-empty-vector-returns-nil
   (is (null (col-seq #()))))
 
+(test col-seq-rest-single-vector-returns-nil
+  (is (null (col-seq (seq-rest #(1))))))
+
 (test seq-first-vector-returns-first-elt
   (is (= 1 (seq-first #(1 2 3)))))
 
