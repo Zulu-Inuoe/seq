@@ -10,6 +10,7 @@
   (:export
    #:col-seq
    #:mapcol
+   #:mapcol*
 
    #:seq-first
    #:seq-rest
@@ -135,6 +136,50 @@
     (values))
   (:method ((col lazy-seq) fn)
     (%mapcol-generic col fn)))
+
+(defun %mapcol*-generic (col fn)
+  (mapcol col (let ((i 0)) (lambda (x) (funcall fn x i) (incf i)))))
+
+(defgeneric mapcol* (col fn)
+  (:documentation
+   "Eagerly apply `fn' to every element in `col'.")
+  (:method (col fn)
+    (%mapcol*-generic col fn))
+  (:method ((col null) fn)
+    (values))
+  (:method ((col list) fn)
+    (%mapcol*-generic col fn))
+  (:method  ((col vector) fn)
+    (loop :for x :across col
+          :for i :from 0
+          :do (funcall fn x i))
+    (values))
+  (:method ((col sequence) fn)
+    (map nil (let ((i 0)) (lambda (x) (funcall fn x i) (incf i))) col)
+    (values))
+  (:method  ((col hash-table) fn)
+    (let ((i 0))
+      (flet ((kv-fcall (k v)
+               (funcall fn (cons k v) i)
+               (incf i)))
+        (declare (dynamic-extent #'kv-fcall))
+        (maphash #'kv-fcall col)))
+    (values))
+  (:method  ((col stream) fn)
+    (cond
+      ((subtypep (stream-element-type col) 'integer)
+       (loop :for x := (read-byte col nil)
+             :for i :from 0
+             :while x
+             :do (funcall fn x i)))
+      ((subtypep (stream-element-type col) 'character)
+       (loop :for x := (read-char col nil)
+             :for i :from 0
+             :while x
+             :do (funcall fn x i))))
+    (values))
+  (:method ((col lazy-seq) fn)
+    (%mapcol*-generic col fn)))
 
 (defgeneric seq-first (seq)
   (:documentation
