@@ -5,6 +5,10 @@
    #:com.inuoe.seqio
    #:com.inuoe.seqio-tests)
   (:import-from
+   #:alexandria
+   #:hash-table-alist
+   #:set-equal)
+  (:import-from
    #:fiveam
    #:def-suite
    #:in-suite
@@ -385,21 +389,21 @@
   (is (eequalp '() (window (%make-seq '(0 1 2 3)) 5))))
 
 (test generic.to-hash-table
-  (is (eset-equal
+  (is (set-equal
        '((1 . 1) (2 . 2) (3 . 3))
-       (to-hash-table '(1 2 3) #'identity)
+       (hash-table-alist (to-hash-table '(1 2 3) #'identity))
        :test #'equal))
-  (is (eset-equal
+  (is (set-equal
        '()
-       (to-hash-table '() #'identity)
+       (hash-table-alist (to-hash-table '() #'identity))
        :test #'equal))
-  (is (eset-equal
+  (is (set-equal
        '((2 . 1) (3 . 2))
-       (to-hash-table '(1 2) #'1+)
+       (hash-table-alist (to-hash-table '(1 2) #'1+))
        :test #'equal))
-  (is (eset-equal
+  (is (set-equal
        '((1 . 2) (2 . 3))
-       (to-hash-table '(1 2) #'identity :selector #'1+)
+       (hash-table-alist (to-hash-table '(1 2) #'identity :selector #'1+))
        :test #'equal)))
 
 (test generic.to-list

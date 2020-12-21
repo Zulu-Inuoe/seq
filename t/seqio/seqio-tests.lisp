@@ -1,8 +1,8 @@
 (defpackage #:com.inuoe.seqio-tests
-  (:use
+  (:use #:cl)
+  (:import-from
    #:alexandria
-   #:cl
-   #:com.inuoe.seqio)
+   #:set-equal)
   (:import-from
    #:com.inuoe.seqio
    #:to-list)
