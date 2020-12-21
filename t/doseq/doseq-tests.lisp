@@ -1,8 +1,15 @@
+;; (delete-package '#:com.inuoe.doseq-tests)
 (defpackage #:com.inuoe.doseq-tests
-  (:use
+  (:use #:cl)
+  (:import-from
    #:alexandria
-   #:cl
-   #:com.inuoe.doseq)
+   #:copy-sequence
+   #:nreversef
+   #:alist-hash-table
+   #:plist-hash-table)
+  (:import-from
+   #:com.inuoe.doseq
+   #:doseq)
   (:import-from
    #:fiveam
    #:def-suite
@@ -64,3 +71,35 @@
         (push kvp kvps))
       (setf kvps (alist-hash-table kvps))
       (is (equalp (test-fn-hash) kvps)))))
+
+(test doseq.list-var-with-index
+  (finishes
+    (let ((values.indices ()))
+      (doseq ((x i) '(1 2 3))
+        (push (cons x i) values.indices))
+      (setf values.indices (nreverse values.indices))
+      (is (equalp '((1 . 0) (2 . 1) (3 . 2)) values.indices)))))
+
+(test doseq.vector-var-with-index
+  (finishes
+    (let ((values.indices ()))
+      (doseq ((x i) #(1 2 3))
+        (push (cons x i) values.indices))
+      (setf values.indices (nreverse values.indices))
+      (is (equalp '((1 . 0) (2 . 1) (3 . 2)) values.indices)))))
+
+(test doseq.hash-var-with-index
+  (finishes
+    (let ((values.indices ()))
+      (doseq ((kvp i) (the hash-table (plist-hash-table '(a 1 b 2 c 3))))
+        (push (cons (cdr kvp) i) values.indices))
+      (setf values.indices (nreverse values.indices))
+      (is (equalp '((1 . 0) (2 . 1) (3 . 2)) values.indices)))))
+
+(test doseq.hash-var-with-index-no-infer
+  (finishes
+    (let ((values.indices ()))
+      (doseq ((kvp i) (the t (plist-hash-table '(a 1 b 2 c 3))))
+        (push (cons (cdr kvp) i) values.indices))
+      (setf values.indices (nreverse values.indices))
+      (is (equalp '((1 . 0) (2 . 1) (3 . 2)) values.indices)))))
