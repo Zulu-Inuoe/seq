@@ -18,11 +18,7 @@
     (recurse vec offset count)))
 
 (defmethod any* ((col vector) predicate)
-  (loop
-    :for i :from 0 :below (length col)
-    :if (funcall predicate (aref col i))
-      :return t
-    :finally (return nil)))
+  (and (position-if predicate col) t))
 
 (defmethod batch ((col vector) size &key (element-type (array-element-type col)) adjustable fill-pointer-p)
   (labels ((recurse (pos e-len)
@@ -39,11 +35,7 @@
   (values))
 
 (defmethod contains ((col vector) item &optional (test #'eql))
-  (loop
-    :for i :from 0 :below (length col)
-    :if (funcall test item (aref col i))
-      :return t
-    :finally (return nil)))
+  (position item col :test test))
 
 (defmethod element-at ((col vector) index &optional default)
   (if (< index (length col))
@@ -57,12 +49,9 @@
       (t (aref col (1- len))))))
 
 (defmethod elast* ((col vector) predicate &optional default)
-  (loop
-    :for i :from (1- (length col)) :downto 0
-    :for elt := (aref col i)
-    :if (funcall predicate elt)
-      :return elt
-    :finally (return default)))
+  (if-let ((pos (position-if predicate col :from-end t)))
+    (aref col pos)
+    default))
 
 (defmethod pad ((col vector) width &optional padding)
   (check-type width (integer 0))
@@ -141,19 +130,13 @@
 
 (defmethod skip-until ((col vector) predicate)
   (lazy-seq
-    (loop
-      :with len := (length col)
-      :for i :below len
-      :if (funcall predicate (aref col i))
-        :return (%make-collapsed-displaced-vector col i (- len i)))))
+    (when-let ((start (position-if predicate col)))
+      (%make-collapsed-displaced-vector col start (- (length col) start)))))
 
 (defmethod skip-while ((col vector) predicate)
   (lazy-seq
-    (loop
-      :with len := (length col)
-      :for i :below len
-      :if (not (funcall predicate (aref col i)))
-        :return (%make-collapsed-displaced-vector col i (- len i)))))
+    (when-let ((start (position-if-not predicate col)))
+      (%make-collapsed-displaced-vector col start (- (length col) start)))))
 
 (defmethod take ((col vector) count)
   (cond
