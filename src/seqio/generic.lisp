@@ -97,7 +97,7 @@
 
 (defmethod contains (col item &optional (test #'eql))
   (%docol (x col)
-    (when (funcall test x item)
+    (when (funcall test item x)
       (return-from contains t))))
 
 (defmethod ecount (col)
