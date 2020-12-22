@@ -114,7 +114,7 @@
     (values)))
 
 (defun mapcol* (col fn)
-  (mapcol col (let ((i 0)) (lambda (x) (funcall fn x i))))
+  (mapcol col (let ((i 0)) (lambda (x) (funcall fn x i) (incf i))))
   (values))
 
 (defgeneric seq-first (seq)
