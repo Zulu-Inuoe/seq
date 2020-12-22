@@ -72,7 +72,7 @@ and t2 is not a subtype of t1."
         (idx (or i (gensym "I"))))
     (multiple-value-bind (body decls) (parse-body body :whole whole)
       `(let ((,vec ,col))
-         (dotimes (,idx (length ,vec) ,@(when result `((let (,var) ,var ,result))))
+         (dotimes (,idx (length ,vec) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
            (let ((,var (aref ,vec ,idx))
                  ,@(when i `((,i ,idx))))
              ,@decls
@@ -88,7 +88,7 @@ and t2 is not a subtype of t1."
            (multiple-value-bind (,more? ,key ,value)
                (,iter)
              (unless ,more?
-               (return ,@(when result `((let (,var) ,var ,result)))))
+               (return ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result)))))
              (let ((,var (cons ,key ,value))
                    ,@(when i `((,i ,i))))
                ,@decls
@@ -96,27 +96,21 @@ and t2 is not a subtype of t1."
 
 (define-doseq-expander stream
     (whole type var i col result body env)
-  (with-gensyms (enum-sym elt-sym)
+  (with-gensyms (stream-sym type-sym reader-sym elt-sym)
     (multiple-value-bind (body decls) (parse-body body :whole whole)
-      `(let ((,enum-sym ,col))
-         (cond
-           ((subtypep (stream-element-type ,enum-sym) 'integer)
-            (do ((,elt-sym (read-byte ,enum-sym nil nil) (read-byte ,enum-sym nil nil))
-                 ,@(when i `((,i 0 (1+ i)))))
-                ((null ,elt-sym) ,@(when result `((let (,var) ,var ,result))))
-              (let ((,var ,elt-sym)
-                    ,@(when i `((,i ,i))))
-                ,@decls
-                (tagbody ,@body))))
-           ((subtypep (stream-element-type ,enum-sym) 'character)
-            (do ((,elt-sym (read-char ,enum-sym nil nil) (read-char ,enum-sym nil nil))
-                 ,@(when i `((,i 0 (1+ i)))))
-                ((null ,elt-sym) ,@(when result `((let (,var) ,var ,result))))
-              (let ((,var ,elt-sym)
-                    ,@(when i `((,i ,i))))
-                ,@decls
-                (tagbody ,@body))))
-           (t (error "unsupported stream type '~A'" (stream-element-type ,enum-sym))))))))
+      `(let* ((,stream-sym ,col)
+              (,type-sym (stream-element-type ,stream-sym))
+              (,reader-sym (cond
+                             ((subtypep ,type-sym 'integer) #'read-byte)
+                             ((subtypep ,type-sym 'characater) #'read-char)
+                             (t (error "unsupported stream type '~A'" ,type-sym)))))
+         (do ((,elt-sym (funcall ,reader-sym ,stream-sym nil) (funcall ,reader-sym ,stream-sym nil))
+              ,@(when i `((,i 0 (1+ i)))))
+             ((null ,elt-sym) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
+           (let ((,var ,elt-sym)
+                 ,@(when i `((,i ,i))))
+             ,@decls
+             (tagbody ,@body)))))))
 
 (define-doseq-expander lazy-seq
     (whole type var i col result body env)
@@ -124,7 +118,7 @@ and t2 is not a subtype of t1."
     (multiple-value-bind (body decls) (parse-body body :whole whole)
       `(do ((,seq-sym (col-seq ,col) (col-seq (seq-rest ,seq-sym)))
             ,@(when i `((,i 0 (1+ i)))))
-           ((null ,seq-sym) ,@(when result `((let (,var) ,var ,result))))
+           ((null ,seq-sym) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
          (let ((,var (seq-first ,seq-sym))
                ,@(when i `((,i ,i))))
            ,@decls
@@ -226,10 +220,11 @@ and t2 is not a subtype of t1."
     (multiple-value-bind (body decl)
         (parse-body body :whole whole)
       `(block nil
-         ,(if i
-              `(mapcol* ,col (lambda (,var ,i) ,@decl (tagbody ,@body)))
-              `(mapcol ,col (lambda (,var) ,@decl (tagbody ,@body))))
-         ,(when result `(let (,var) ,var ,result))))))
+         ,@(if i
+               `((mapcol* ,col (lambda (,var ,i) ,@decl (tagbody ,@body)))
+                 ,(when result `(let (,var ,i) ,var ,i ,result)))
+               `((mapcol ,col (lambda (,var) ,@decl (tagbody ,@body)))
+                 ,(when result `(let (,var) ,var ,result))))))))
 
 (defmacro doseq (&whole whole (var col &optional result)
                  &body body
