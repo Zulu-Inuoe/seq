@@ -181,7 +181,7 @@ and t2 is not a subtype of t1."
                  )
                 (:special-form
                  (case fn
-                   ((load-time-value)
+                   ((load-time-value prog1 multiple-value-prog1)
                     (%expression-type (car args) env))
                    ((progn)
                     (%expression-type (car (last args)) env))
