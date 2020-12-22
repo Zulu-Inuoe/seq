@@ -1,6 +1,5 @@
 (defpackage #:com.inuoe.seq
-  (:use
-   #:cl)
+  (:use #:cl)
   (:import-from
    #:alexandria
    #:hash-table-alist
@@ -33,31 +32,11 @@
 (defun lazy-seq-p (x)
   (typep x 'lazy-seq))
 
-(declaim (inline %lazy-seq-value))
-(defun %lazy-seq-value (lazy-seq)
-  (if-let ((factory (slot-value lazy-seq '%lazy-seq-factory)))
-    (setf (slot-value lazy-seq '%lazy-seq-factory) nil
-          (slot-value lazy-seq '%lazy-seq-value) (col-seq (funcall factory)))
-    (slot-value lazy-seq '%lazy-seq-value)))
-
 (defun make-lazy-seq (factory)
   (make-instance 'lazy-seq :factory factory))
 
 (defmacro lazy-seq (&body body)
   `(make-lazy-seq (lambda () ,@body)))
-
-(defun %make-collapsed-displaced-vector (vec offset count)
-  (labels ((recurse (vec offset count)
-             (check-type vec vector)
-             (multiple-value-bind (displaced-to displaced-offset) (array-displacement vec)
-               (cond
-                 (displaced-to
-                  (recurse displaced-to (+ offset displaced-offset) count))
-                 ((and (zerop offset) (= count (length vec)))
-                  vec)
-                 (t
-                  (make-array count :element-type (array-element-type vec) :displaced-to vec :displaced-index-offset offset))))))
-    (recurse vec offset count)))
 
 (defgeneric col-seq (col)
   (:documentation
@@ -72,47 +51,44 @@
     ;;so we can't just close it over
     (hash-table-alist col))
   (:method  ((col lazy-seq))
-    (%lazy-seq-value col))
+    (if-let ((factory (slot-value col '%lazy-seq-factory)))
+      (setf (slot-value col '%lazy-seq-factory) nil
+            (slot-value col '%lazy-seq-value) (col-seq (funcall factory)))
+      (slot-value col '%lazy-seq-value)))
   (:method ((col package))
-    (let ((res ()))
-      (do-symbols (s col)
-        (push s res))
-      res))
+    (let ((seq ()))
+      (do-symbols (symbol col seq)
+        (push symbol seq))))
   (:method ((col stream))
-    (let ((stream-type (stream-element-type col)))
+    (let ((type (stream-element-type col)))
       (cond
-        ((subtypep stream-type 'integer)
+        ((subtypep type 'integer)
          (labels ((recurse-bytes ()
-                    (when-let ((val (read-byte col nil nil)))
+                    (when-let ((val (read-byte col nil)))
                       (cons val (lazy-seq (recurse-bytes))))))
            (recurse-bytes)))
-        ((subtypep stream-type 'character)
+        ((subtypep type 'character)
          (labels ((recurse-chars ()
-                    (when-let ((val (read-char col nil nil)))
+                    (when-let ((val (read-char col nil)))
                       (cons val (lazy-seq (recurse-chars))))))
            (recurse-chars)))
         (t
-         (error "Unsupported stream element type '~A'" stream-type))))))
-
-(defun %mapcol-generic (col fn)
-  (loop
-    :for seq := (col-seq col) :then (col-seq (seq-rest seq))
-    :while seq
-    :do (funcall fn (seq-first seq)))
-  (values))
+         (error "Unsupported stream element type '~A'" type))))))
 
 (defgeneric mapcol (col fn)
   (:documentation
    "Eagerly apply `fn' to every element in `col'.")
   (:method (col fn)
-    (%mapcol-generic col fn))
+    (loop :for seq := (col-seq col) :then (col-seq (seq-rest seq))
+          :while seq
+          :do (funcall fn (seq-first seq)))
+    (values))
   (:method ((col null) fn)
     (values))
   (:method ((col list) fn)
-    (%mapcol-generic col fn))
-  (:method  ((col vector) fn)
-    (loop :for x :across col
-          :do (funcall fn x))
+    (loop :for seq := (col-seq col) :then (col-seq (seq-rest seq))
+          :while seq
+          :do (funcall fn (seq-first seq)))
     (values))
   (:method ((col sequence) fn)
     (map nil fn col)
@@ -121,57 +97,24 @@
     (maphash (lambda (k v) (funcall fn (cons k v))) col)
     (values))
   (:method  ((col stream) fn)
-    (cond
-      ((subtypep (stream-element-type col) 'integer)
-       (loop :for x := (read-byte col nil)
-             :while x
-             :do (funcall fn x)))
-      ((subtypep (stream-element-type col) 'character)
-       (loop :for x := (read-char col nil)
-             :while x
-             :do (funcall fn x))))
+    (loop :with reader := (let ((type (stream-element-type col)))
+                            (cond
+                              ((subtypep type 'integer)   #'read-byte)
+                              ((subtypep type 'character) #'read-char)
+                              (t (error "Unsupported stream element type '~A'" type))))
+          :for x := (funcall reader col nil)
+          :while x
+          :do (funcall fn x))
     (values))
   (:method ((col lazy-seq) fn)
-    (%mapcol-generic col fn)))
+    (loop :for seq := (col-seq col) :then (col-seq (seq-rest seq))
+          :while seq
+          :do (funcall fn (seq-first seq)))
+    (values)))
 
-(defun %mapcol*-generic (col fn)
-  (mapcol col (let ((i 0)) (lambda (x) (funcall fn x i) (incf i)))))
-
-(defgeneric mapcol* (col fn)
-  (:documentation
-   "Eagerly apply `fn' to every element in `col'.")
-  (:method (col fn)
-    (%mapcol*-generic col fn))
-  (:method ((col null) fn)
-    (values))
-  (:method ((col list) fn)
-    (%mapcol*-generic col fn))
-  (:method  ((col vector) fn)
-    (loop :for x :across col
-          :for i :from 0
-          :do (funcall fn x i))
-    (values))
-  (:method ((col sequence) fn)
-    (map nil (let ((i 0)) (lambda (x) (funcall fn x i) (incf i))) col)
-    (values))
-  (:method  ((col hash-table) fn)
-    (maphash (let ((i 0)) (lambda (k v) (funcall fn (cons k v) i) (incf i))) col)
-    (values))
-  (:method  ((col stream) fn)
-    (cond
-      ((subtypep (stream-element-type col) 'integer)
-       (loop :for x := (read-byte col nil)
-             :for i :from 0
-             :while x
-             :do (funcall fn x i)))
-      ((subtypep (stream-element-type col) 'character)
-       (loop :for x := (read-char col nil)
-             :for i :from 0
-             :while x
-             :do (funcall fn x i))))
-    (values))
-  (:method ((col lazy-seq) fn)
-    (%mapcol*-generic col fn)))
+(defun mapcol* (col fn)
+  (mapcol col (let ((i 0)) (lambda (x) (funcall fn x i))))
+  (values))
 
 (defgeneric seq-first (seq)
   (:documentation
@@ -194,29 +137,33 @@
   (:method ((seq vector))
     (let ((len (length seq)))
       (when (> len 1)
-        (%make-collapsed-displaced-vector seq 1 (1- len))))))
+        (labels ((recurse (array offset count)
+                   (multiple-value-bind (displaced-to displaced-offset) (array-displacement array)
+                     (cond
+                       (displaced-to
+                        (recurse displaced-to (+ offset displaced-offset) count))
+                       (t
+                        (make-array count :element-type (array-element-type array) :displaced-to array :displaced-index-offset offset))))))
+          (recurse seq 1 (1- len)))))))
 
 (defmethod print-object ((object lazy-seq) stream)
   (print-unreadable-object (object stream)
     (format stream "LAZY-SEQ [")
     (if (null (slot-value object '%lazy-seq-factory))
       (loop
-        :with seq := (%lazy-seq-value object)
-        :with first := t
-        :do
-           (when (null seq)
-             (loop-finish))
-           (format stream "~:[ ~;~]~A" first (seq-first seq))
-           (setf first nil)
-           (let ((rest (seq-rest seq)))
-             (cond
-               ((and (lazy-seq-p rest) (slot-value rest '%lazy-seq-factory))
-                ;; next sequence is lazy and not evaluated
-                (format stream " . ")
-                (format stream "~A" rest)
-                (loop-finish))
-               (t
-                ;; next sequence is available so we can carry on
-                (setf seq (col-seq rest))))))
+        :with seq := (slot-value object '%lazy-seq-value)
+        :for first := t :then nil
+        :while seq
+        :do (format stream "~:[ ~;~]~A" first (seq-first seq))
+            (let ((rest (seq-rest seq)))
+              (cond
+                ((and (lazy-seq-p rest) (slot-value rest '%lazy-seq-factory))
+                 ;; next sequence is lazy and not evaluated
+                 (format stream " . ")
+                 (format stream "~A" rest)
+                 (loop-finish))
+                (t
+                 ;; next sequence is available so we can carry on
+                 (setf seq (col-seq rest))))))
       (format stream " ... "))
     (format stream "]")))
