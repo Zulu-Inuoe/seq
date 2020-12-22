@@ -139,9 +139,9 @@ and t2 is not a subtype of t1."
   (defun %expression-type (exp env)
     (setf exp (macroexpand exp env))
     (cond
-      ((constantp exp env)
+      ((constantp exp)
        ;;Constant expression, just get its type
-       (type-of exp))
+       (type-of (eval exp)))
       ((symbolp exp)
        (multiple-value-bind (bind-type local decl-info)
            (variable-information exp env)
