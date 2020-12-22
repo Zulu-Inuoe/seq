@@ -4,6 +4,7 @@
   (:import-from
    #:alexandria
    #:ensure-list
+   #:if-let
    #:parse-body
    #:type=
    #:when-let
@@ -164,9 +165,11 @@ and t2 is not a subtype of t1."
                                       (cdr (assoc 'ftype decl-info)))
                                      (t
                                       ;;Otherwise, try and get the decl info or the derived
-                                      (or (cdr (assoc 'ftype decl-info))
-                                          (and (fboundp fn)
-                                               (%derived-fun-type (symbol-function fn))))))))
+                                      (if-let ((cell (assoc 'ftype decl-info)))
+                                        (unless (eq (cdr cell) 'function)
+                                          (cdr cell))
+                                        (and (fboundp fn)
+                                             (%derived-fun-type (symbol-function fn))))))))
                    ;;ftype definition is
                    (destructuring-bind (function params return-values)
                        ftype
