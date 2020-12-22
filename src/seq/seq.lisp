@@ -32,6 +32,7 @@
 (defun lazy-seq-p (x)
   (typep x 'lazy-seq))
 
+(declaim (ftype (function ((or symbol function)) (values lazy-seq &optional)) make-lazy-seq))
 (defun make-lazy-seq (factory)
   (make-instance 'lazy-seq :factory factory))
 
