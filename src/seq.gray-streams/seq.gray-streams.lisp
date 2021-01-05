@@ -1,7 +1,5 @@
 (defpackage #:com.inuoe.seq.gray-streams
-  (:use
-   #:cl
-   #:trivial-gray-streams)
+  (:use #:cl)
   (:import-from
    #:alexandria
    #:if-let
@@ -14,13 +12,15 @@
    #:col-seq
    #:seq-first
    #:seq-rest)
+  (:local-nicknames
+   (#:gs #:trivial-gray-streams))
   (:export
    #:seq-input-stream
    #:make-seq-input-stream))
 
 (in-package #:com.inuoe.seq.gray-streams)
 
-(defclass seq-input-stream (fundamental-input-stream)
+(defclass seq-input-stream (gs:fundamental-input-stream)
   ((%col
     :initarg :col
     :initform (required-argument :col)
@@ -33,7 +33,7 @@
 (defun make-seq-input-stream (col)
   (make-instance 'seq-input-stream :col col))
 
-(defmethod stream-read-char ((stream seq-input-stream))
+(defmethod gs:stream-read-char ((stream seq-input-stream))
   (cond
     ((%unread-chars stream)
      (pop (%unread-chars stream)))
@@ -43,87 +43,93 @@
          (setf (%col stream) (seq-rest seq)))
        :eof))))
 
-(defmethod stream-read-line ((stream seq-input-stream))
-  (let ((res (make-string-output-stream)))
-    (with-slots (%col) stream
-      (loop
-        :with eof := t
-        :for seq := (col-seq %col) :then (col-seq (seq-rest seq))
-        :while seq
-        :for c := (seq-first seq)
-        :if (char= c #\NewLine)
-          :do (progn
-                (setf eof nil)
-                (loop-finish))
-        :else
-          :do (write-char c res)
-        :finally
-           (setf %col (seq-rest seq))
-           (return (values (get-output-stream-string res) eof))))))
+(defmethod gs:stream-read-line ((stream seq-input-stream))
+  (let ((col (%col stream)))
+    (unwind-protect
+         (let ((res (make-string-output-stream))
+               (eof t))
+           (loop
+             :for c := (pop (%unread-chars stream))
+             :while c
+             :do (case c
+                   (#\Newline
+                    (setf eof nil)
+                    (loop-finish))
+                   (write-char c res)))
+           (when eof
+             (loop
+               :for seq := (col-seq col)
+               :while seq
+               :do (let ((c (seq-first seq)))
+                     (setf col (seq-rest seq))
+                     (case c
+                       (#\Newline
+                        (setf eof nil)
+                        (loop-finish))
+                       (t
+                        (write-char c res))))))
+           (values (get-output-stream-string res) eof))
+      (setf (%col stream) col))))
 
-(defmethod stream-unread-char ((stream seq-input-stream) character)
+(defmethod gs:stream-unread-char ((stream seq-input-stream) character)
   (push character (%unread-chars stream))
   (values))
 
-(defmethod stream-listen ((stream seq-input-stream))
+(defmethod gs:stream-listen ((stream seq-input-stream))
   t)
 
-(defmethod stream-read-byte ((stream seq-input-stream))
+(defmethod gs:stream-read-byte ((stream seq-input-stream))
   (if-let ((seq (col-seq (%col stream))))
     (prog1 (seq-first seq)
       (setf (%col stream) (seq-rest seq)))
     (prog1 :eof
       (setf (%col stream) nil))))
 
-(defmethod stream-read-sequence ((stream seq-input-stream) (sequence list) start end &key &allow-other-keys)
-  (loop
-    :with col := (%col stream)
-    :for pos :from start
-    :for cell :on (nthcdr start sequence)
-    :while (and (or (null end) (< pos end)))
-    :do
-       (if-let ((seq (col-seq col)))
-         (setf (car cell) (seq-first seq)
-               col (seq-rest seq))
-         (loop-finish))
-    :finally
-       (setf (%col stream) col)
-       (return pos)))
+(defmethod gs:stream-read-sequence ((stream seq-input-stream) (sequence list) start end &key &allow-other-keys)
+  (let ((col (%col stream)))
+    (unwind-protect
+         (loop
+           :for pos :from start
+           :for cell :on (nthcdr start sequence)
+           :for seq := (col-seq col)
+           :while (and seq (or (null end) (< pos end)))
+           :do (setf (car cell) (seq-first seq)
+                     col (seq-rest seq))
+           :finally (return pos))
+      (setf (%col stream) col))))
 
-(defmethod stream-read-sequence ((stream seq-input-stream) (sequence vector) start end &key &allow-other-keys)
-  (loop
-    :with col := (%col stream)
-    :for pos :from start
-    :while (and (or (null end) (< pos end))
-                (< pos (length sequence)))
-    :do
-       (if-let ((seq (col-seq col)))
-         (setf (aref sequence pos) (seq-first seq)
-               col (seq-rest seq))
-         (loop-finish))
-    :finally
-       (setf (%col stream) col)
-       (return pos)))
+(defmethod gs:stream-read-sequence ((stream seq-input-stream) (sequence vector) start end &key &allow-other-keys)
+  (let ((col (%col stream)))
+    (unwind-protect
+         (loop
+           :for pos :from start :below (let ((len (length sequence)))
+                                         (min len (or end len)))
+           :for seq := (col-seq col)
+           :while seq
+           :do (setf (aref sequence pos) (seq-first seq)
+                     col (seq-rest seq))
+           :finally (return pos))
+      (setf (%col stream) col))))
 
-(defmethod stream-read-sequence ((stream seq-input-stream) (sequence sequence) start end &key &allow-other-keys)
-  (let ((pos 0)
-        (col (%col stream)))
-    (block nil
-      (map-into sequence
-                (lambda (elt)
-                  (cond
-                    ((< pos start)
-                     (incf pos)
-                     elt)
-                    (t
-                     (if-let ((seq (and (or (null end) (< pos end))
-                                        (col-seq col))))
-                       (prog1 (seq-first seq)
-                         (incf pos)
-                         (setf col (seq-rest seq)))
-                       (progn
-                         (setf col nil)
-                         (return))))))
-                sequence))
-    (setf (%col stream) col)
-    pos))
+(defmethod gs:stream-read-sequence ((stream seq-input-stream) (sequence sequence) start end &key &allow-other-keys)
+  (let ((col (%col stream)))
+    (unwind-protect
+         (let ((pos 0))
+           (block nil
+             (map-into sequence
+                       (lambda (elt)
+                         (cond
+                           ((< pos start)
+                            (incf pos)
+                            elt)
+                           ((or (null end) (< pos end))
+                            (if-let ((seq (col-seq col)))
+                              (prog1 (seq-first seq)
+                                (incf pos)
+                                (setf col (seq-rest seq)))
+                              (return)))
+                           (t
+                            (return))))
+                       sequence))
+           pos)
+      (setf (%col stream) col))))
