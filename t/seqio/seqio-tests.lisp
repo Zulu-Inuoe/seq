@@ -68,6 +68,9 @@
 (test range.allows-count-nil
   (is (eequal '(0 1 2 3 4) (seqio:take (seqio:range) 5))))
 
+(test range.allows-step
+  (is (eequal '(0 2 4 6 8) (seqio:take (seqio:range nil nil 2) 5))))
+
 (test repeatedly.generates-to-limit
   (is (eequal '(1 2 3) (seqio:repeatedly (let ((i 0)) (lambda () (incf i))) 3))))
 

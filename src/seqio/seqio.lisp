@@ -181,17 +181,19 @@ Each subsequence is a fresh `vector' of size [1,size].
   (:documentation
    "Adds `element' to the beginning of `col'."))
 
-(defun range (&optional start count)
+(defun range (&optional start count step)
   "Generates `count' integers starting at `range'."
-  (let ((start (or start 0)))
+  (let* ((step (or step 1))
+         (start (or start 0))
+         (start (- (+ start step) step)))
     (if count
-        (labels ((recurse (i)
+        (labels ((recurse (i x)
                    (when (< i count)
-                     (lazy-seq (cons (+ i start) (recurse (1+ i)))))))
-          (recurse 0))
-        (labels ((recurse (i)
-                   (lazy-seq (cons i (recurse (1+ i))))))
-          (recurse start)))))
+                     (cons x (lazy-seq (recurse (1+ i) (+ x step)))))))
+          (lazy-seq (recurse 0 start)))
+        (labels ((recurse (x)
+                   (cons x (lazy-seq (recurse (+ x step))))))
+          (lazy-seq (recurse start))))))
 
 (defun repeat (value count)
   "Generates an col that repeats `value' `count' times."
