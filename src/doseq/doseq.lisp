@@ -13,11 +13,8 @@
    #:introspect-environment
    #:function-information
    #:variable-information)
-  (:import-from
-   #:com.inuoe.seq
-   #:mapcol
-   #:mapcol*
-   #:lazy-seq)
+  (:local-nicknames
+   (#:seq #:com.inuoe.seq))
   (:export
    #:doseq
 
@@ -129,13 +126,13 @@ and t2 is not a subtype of t1."
            ,@decls
            (tagbody ,@body))))))
 
-(define-doseq-expander lazy-seq
+(define-doseq-expander seq:lazy-seq
     (whole type var i col result decls body env)
   (with-gensyms (seq-sym)
-    `(do ((,seq-sym (col-seq ,col) (col-seq (seq-rest ,seq-sym)))
+    `(do ((,seq-sym (seq:col-seq ,col) (seq:col-seq (seq:seq-rest ,seq-sym)))
           ,@(when i `((,i 0 (1+ i)))))
          ((null ,seq-sym) ,@(%result-form var i result))
-       (let ((,var (seq-first ,seq-sym))
+       (let ((,var (seq:seq-first ,seq-sym))
              ,@(when i `((,i ,i))))
          ,@decls
          (tagbody ,@body)))))
@@ -239,9 +236,9 @@ and t2 is not a subtype of t1."
     (declare (ignore whole type env))
     `(block nil
        ,@(if i
-             `((mapcol* ,col (lambda (,var ,i) ,@decls (tagbody ,@body)))
+             `((seq:mapcol* ,col (lambda (,var ,i) ,@decls (tagbody ,@body)))
                ,(car (%result-form var i result)))
-             `((mapcol ,col (lambda (,var) ,@decls (tagbody ,@body)))
+             `((seq:mapcol ,col (lambda (,var) ,@decls (tagbody ,@body)))
                ,(car (%result-form var i result)))))))
 
 (defmacro doseq (&whole whole (var col &optional result)

@@ -17,6 +17,8 @@
    #:test
    #:is
    #:finishes)
+  (:local-nicknames
+   (#:seq #:com.inuoe.seq))
   (:export
    ;;; Test suites
    #:doseq
@@ -48,6 +50,9 @@
 (defun test-fn-hash ()
   (plist-hash-table (list :a 1 :b 2 :c 3)))
 
+(defun test-fn-lazy-seq ()
+  (seq:lazy-seq (cons 1 (seq:lazy-seq (cons 2 (seq:lazy-seq (cons 3 nil)))))))
+
 (test doseq.list
   (finishes
     (let ((elts ()))
@@ -71,6 +76,14 @@
         (push kvp kvps))
       (setf kvps (alist-hash-table kvps))
       (is (equalp (test-fn-hash) kvps)))))
+
+(test doseq.lazy-seq
+  (finishes
+    (let ((values ()))
+      (doseq (x (the seq:lazy-seq (test-fn-lazy-seq)))
+        (push x values))
+      (setf values (nreverse values))
+      (is (equalp '(1 2 3) values)))))
 
 (test doseq.list-var-with-index
   (finishes
