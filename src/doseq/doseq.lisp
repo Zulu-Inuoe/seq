@@ -64,6 +64,13 @@ and t2 is not a subtype of t1."
         ,@body))
      ',type))
 
+(defun %result-form (var i result)
+  (when result
+    `((let (,var ,@(when i `(,i)))
+        ,var
+        ,@(when i `(,i))
+        ,result))))
+
 ;;; Base expanders
 
 (define-doseq-expander vector
@@ -71,9 +78,9 @@ and t2 is not a subtype of t1."
   (let ((vec (gensym "VEC"))
         (idx (or i (gensym "I"))))
     `(let ((,vec ,col))
-       (dotimes (,idx (length ,vec) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
+       (dotimes (,idx (length ,vec) ,@(%result-form var i result))
          (let ((,var (aref ,vec ,idx))
-               ,@(when i `((,i ,idx))))
+               ,@(when i `((,i ,i))))
            ,@decls
            (tagbody ,@body))))))
 
@@ -86,7 +93,7 @@ and t2 is not a subtype of t1."
          (multiple-value-bind (,more? ,key ,value)
              (,iter)
            (unless ,more?
-             (return ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result)))))
+             (return ,@(%result-form var i result)))
            (let ((,var (cons ,key ,value))
                  ,@(when i `((,i ,i))))
              ,@decls
@@ -103,7 +110,7 @@ and t2 is not a subtype of t1."
                            (t (error "unsupported stream type '~A'" ,type-sym)))))
        (do ((,elt-sym (funcall ,reader-sym ,stream-sym nil) (funcall ,reader-sym ,stream-sym nil))
             ,@(when i `((,i 0 (1+ i)))))
-           ((null ,elt-sym) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
+           ((null ,elt-sym) ,@(%result-form var i result))
          (let ((,var ,elt-sym)
                ,@(when i `((,i ,i))))
            ,@decls
@@ -114,7 +121,7 @@ and t2 is not a subtype of t1."
   (with-gensyms (seq-sym)
     `(do ((,seq-sym (col-seq ,col) (col-seq (seq-rest ,seq-sym)))
           ,@(when i `((,i 0 (1+ i)))))
-         ((null ,seq-sym) ,@(when result `((let (,var ,@(when i `(,i))) ,var ,@(when i `(,i)) ,result))))
+         ((null ,seq-sym) ,@(%result-form var i result))
        (let ((,var (seq-first ,seq-sym))
              ,@(when i `((,i ,i))))
          ,@decls
@@ -217,9 +224,9 @@ and t2 is not a subtype of t1."
     `(block nil
        ,@(if i
              `((mapcol* ,col (lambda (,var ,i) ,@decls (tagbody ,@body)))
-               ,(when result `(let (,var ,i) ,var ,i ,result)))
+               ,(car (%result-form var i result)))
              `((mapcol ,col (lambda (,var) ,@decls (tagbody ,@body)))
-               ,(when result `(let (,var) ,var ,result)))))))
+               ,(car (%result-form var i result)))))))
 
 (defmacro doseq (&whole whole (var col &optional result)
                  &body body
