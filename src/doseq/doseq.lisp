@@ -73,6 +73,19 @@ and t2 is not a subtype of t1."
 
 ;;; Base expanders
 
+(define-doseq-expander list
+    (whole type var i col result decls body env)
+  (if i
+      `(let ((,i 0))
+         (dolist (,var ,col ,@(%result-form var i result))
+           (let ((,i ,i))
+             ,@decls
+             ,@body)
+           (incf ,i)))
+      `(dolist (,var ,col ,@(%result-form var i result))
+         ,@decls
+         ,@body)))
+
 (define-doseq-expander vector
     (whole type var i col result decls body env)
   (let ((vec (gensym "VEC"))
