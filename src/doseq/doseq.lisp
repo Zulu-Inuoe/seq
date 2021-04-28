@@ -219,15 +219,18 @@ and t2 is not a subtype of t1."
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun %doseq-expand (default-expander whole var col result body env)
+    (unless (and (typep var 'symbol) (not (null var)))
+      (unless (typep var 'list)
+        (error "Bad doseq binding '~A' - should be either a variable, or a list of (variable index).~%Form:~%~A" var whole))
+      (destructuring-bind (&optional var-sym i-sym) var
+        (unless (and var-sym (typep var-sym 'symbol)
+                     i-sym (typep i-sym 'symbol))
+          (error "Bad doseq binding '~A' - should be either a variable, or a list of (variable index).~%Form:~%~A" var whole))))
+
     (let* ((exp-type (%expression-type col env))
            (expander (or (%get-expander exp-type) default-expander)))
       ;; Check for var vs (var) vs (var i)
-      (multiple-value-bind (var i)
-          (let ((var (ensure-list var)))
-            (cond
-              ((null (cdr var)) (values (first var) nil))
-              ((null (cddr var)) (values (first var) (second var)) )
-              (t (error "Invalid doseq binding '~A'" var))))
+      (destructuring-bind (var &optional i) (ensure-list var)
         (multiple-value-bind (body decls) (parse-body body :whole whole)
           (funcall expander whole exp-type var i col result decls body env))))))
 
