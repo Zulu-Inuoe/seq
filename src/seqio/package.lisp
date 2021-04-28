@@ -55,6 +55,7 @@
    #:prepend
    #:range
    #:repeat
+   #:repeatedly
    #:ereverse
    #:run-length-encode
    #:scan

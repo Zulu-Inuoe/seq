@@ -67,3 +67,12 @@
 
 (test range.allows-count-nil
   (is (eequal '(0 1 2 3 4) (seqio:take (seqio:range) 5))))
+
+(test repeatedly.generates-to-limit
+  (is (eequal '(1 2 3) (seqio:repeatedly (let ((i 0)) (lambda () (incf i))) 3))))
+
+(test repeatedly.no-call-fn-until-forced
+  (is (null (block nil (seqio:repeatedly (lambda () (return t))) nil))))
+
+(test repeatedly.calls-on-consume
+  (is (eq t (block nil (seq:col-seq (seqio:repeatedly (lambda () (return t)))) nil))))

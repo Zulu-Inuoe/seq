@@ -208,12 +208,10 @@ Each subsequence is a fresh `vector' of size [1,size].
   (if limit
       (labels ((recurse (i)
                  (when (> i 0)
-                   (cons (funcall f)
-                         (lazy-seq (recurse (1- i)))))))
+                   (lazy-seq (cons (funcall f) (recurse (1- i)))))))
         (recurse limit))
       (labels ((recurse ()
-                 (cons (funcall f)
-                       (lazy-seq (recurse)))))
+                 (lazy-seq (cons (funcall f) (recurse)))))
         (recurse))))
 
 (defgeneric run-length-encode (col &key test limit)
