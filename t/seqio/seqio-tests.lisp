@@ -4,12 +4,14 @@
    #:alexandria
    #:set-equal)
   (:import-from
-   #:com.inuoe.seqio
-   #:to-list)
-  (:import-from
    #:fiveam
    #:def-suite
-   #:in-suite)
+   #:in-suite
+   #:test
+   #:is)
+  (:local-nicknames
+   (#:seq #:com.inuoe.seq)
+   (#:seqio #:com.inuoe.seqio))
   (:export
    #:eequal
    #:eequalp
@@ -40,14 +42,28 @@
     (if result 0 -1)))
 
 (defun eequal (e1 e2)
-  "As `equal', but forces arguments by `to-list'"
-  (equal (to-list e1) (to-list e2)))
+  "As `equal', but forces arguments by `seqio:to-list'"
+  (equal (seqio:to-list e1) (seqio:to-list e2)))
 
 (defun eequalp (e1 e2)
-  "As `equalp', but forces arguments by `to-list'"
-  (equalp (to-list e1) (to-list e2)))
+  "As `equalp', but forces arguments by `seqio:to-list'"
+  (equalp (seqio:to-list e1) (seqio:to-list e2)))
 
 (defun eset-equal (e1 e2 &key (test #'eql) (key #'identity))
-  "As `set-equal', but forces arguments by `to-list'"
-  (set-equal (to-list e1) (to-list e2) :test test :key key))
+  "As `set-equal', but forces arguments by `seqio:to-list'"
+  (set-equal (seqio:to-list e1) (seqio:to-list e2) :test test :key key))
 
+(test range.generates-range
+  (is (eequal '(0 1 2) (seqio:range 0 3))))
+
+(test range.uses-start
+  (is (eequal '(1 2 3) (seqio:range 1 3))))
+
+(test range.uses-count
+  (is (eequal '(1 2) (seqio:range 1 2))))
+
+(test range.start-0-on-nil
+  (is (eequal '(0 1) (seqio:range nil 2))))
+
+(test range.allows-count-nil
+  (is (eequal '(0 1 2 3 4) (seqio:take (seqio:range) 5))))
