@@ -141,8 +141,12 @@ and t2 is not a subtype of t1."
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun %derived-fun-type (function)
+    (declare (ignorable function))
     #+sbcl
-    (sb-impl::%fun-type function))
+    #.(let ((#1=#:%fun-type (find-symbol (string '#1#) '#:sb-impl)))
+      (if #1#
+        `(,#1# function)
+         `(list 'function '* '*))))
 
   (defun %expression-type (exp env)
     (setf exp (macroexpand exp env))
