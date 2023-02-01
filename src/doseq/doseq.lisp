@@ -143,10 +143,12 @@ and t2 is not a subtype of t1."
   (defun %derived-fun-type (function)
     (declare (ignorable function))
     #+sbcl
-    #.(let ((#1=#:%fun-type (find-symbol (string '#1#) '#:sb-impl)))
-      (if #1#
-        `(,#1# function)
-         `(list 'function '* '*))))
+    #.(let ((#1=#:%fun-type (find-symbol (string '#1#) '#:sb-impl))
+            (#2=#:%simple-fun-type (find-symbol (string '#2#) '#:sb-kernel)))
+      (cond
+        (#1# `(,#1# function))
+        (#2# `(,#2# function))
+        (t   `(list 'function '* '*)))))
 
   (defun %expression-type (exp env)
     (setf exp (macroexpand exp env))
